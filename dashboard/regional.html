@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TN '26 | Regional Performance Map</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #050505;
+            color: #e5e2e1;
+            overflow: hidden; /* Desktop command center feel */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Tonal Layering & Glassmorphism */
+        .glass-panel {
+            background: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #333333;
+        }
+        .bento-card {
+            background: #121212;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .bento-card:hover {
+            border-color: #3b494c;
+            background: #1b1b1c;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 10px;
+        }
+        /* Map Glow Effects */
+        .cyan-glow {
+            filter: drop-shadow(0 0 8px rgba(0, 218, 243, 0.4));
+        }
+        .gold-glow {
+            filter: drop-shadow(0 0 8px rgba(255, 225, 109, 0.4));
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#131313",
+                        "tertiary": "#f0ecec",
+                        "background": "#131313",
+                        "surface-container": "#202020",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-fixed": "#ffe16d",
+                        "primary-fixed-dim": "#00daf3",
+                        "inverse-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "primary": "#c3f5ff",
+                        "on-surface-variant": "#bac9cc",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-highest": "#353535",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "inverse-primary": "#006875",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "on-tertiary": "#313030",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#221b00",
+                        "on-secondary": "#3a3000",
+                        "on-background": "#e5e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary-container": "#d3d0cf",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "on-primary-fixed": "#001f24",
+                        "outline": "#849396",
+                        "secondary": "#fff9ef",
+                        "secondary-fixed-dim": "#e9c400",
+                        "outline-variant": "#3b494c",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#004f58",
+                        "on-secondary-container": "#725f00",
+                        "on-error": "#690005",
+                        "surface-container-low": "#1b1b1c",
+                        "surface": "#131313",
+                        "primary-container": "#00e5ff",
+                        "tertiary-fixed": "#e5e2e1",
+                        "surface-bright": "#393939",
+                        "primary-fixed": "#9cf0ff",
+                        "on-primary": "#00363d",
+                        "surface-tint": "#00daf3",
+                        "surface-variant": "#353535",
+                        "on-tertiary-container": "#5a5959",
+                        "secondary-container": "#ffdb3c",
+                        "on-primary-container": "#00626e",
+                        "on-secondary-fixed-variant": "#544600",
+                        "inverse-on-surface": "#303030"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-relaxed": "1.5rem",
+                        "unit": "4px",
+                        "max-width": "1800px",
+                        "stack-compact": "0.5rem",
+                        "margin-page": "2rem",
+                        "gutter": "1.5rem",
+                        "grid-columns": "12"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "label-md": ["JetBrains Mono"],
+                        "display-lg": ["Montserrat"],
+                        "title-lg": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-lg": ["Montserrat"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex h-screen w-full font-body-md text-on-surface">
+<!-- Sidebar Navigation Drawer -->
+<aside class="hidden xl:flex fixed left-0 top-0 h-full w-64 bg-surface-dim border-r border-outline-variant shadow-xl flex-col py-6 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-secondary-fixed">TN '26</h1>
+<p class="font-body-md text-on-surface-variant text-sm mt-1">General Election Suite</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-secondary-fixed transition-all duration-200" href="index.html"><span class="material-symbols-outlined">dashboard</span><span class="font-body-lg text-body-lg">Executive Overview</span></a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-secondary-fixed transition-all duration-200" href="swing_analysis.html"><span class="material-symbols-outlined">trending_up</span><span class="font-body-lg text-body-lg">Swing Analysis</span></a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-secondary-fixed transition-all duration-200" href="demographic.html"><span class="material-symbols-outlined">groups</span><span class="font-body-lg text-body-lg">Demographic Insights</span></a>
+<a class="flex items-center gap-4 px-4 py-3 text-secondary-fixed bg-surface-container-highest border-l-4 border-secondary-fixed transition-all duration-200" href="regional.html"><span class="material-symbols-outlined">map</span><span class="font-body-lg text-body-lg">Regional Strongholds</span></a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-secondary-fixed transition-all duration-200" href="coalition.html"><span class="material-symbols-outlined">analytics</span><span class="font-body-lg text-body-lg">Coalition Metrics</span></a>
+
+</nav>
+<div class="border-t border-outline-variant pt-6 mt-auto">
+<div class="flex items-center gap-3 px-4 bg-surface-container-low py-3 rounded-lg border border-outline-variant">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-sm">JD</div>
+<div class="overflow-hidden">
+<p class="font-label-md text-label-md truncate text-on-surface">Voter Dashboard</p>
+<p class="font-label-sm text-[10px] text-on-surface-variant">Verified Analyst</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar (Shared Component Anchor) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-background/70 backdrop-blur-md border-b border-outline-variant shadow-[0_0_15px_rgba(0,255,255,0.1)]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim">menu</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-secondary-fixed">TN '26 ELECTIONS</h1>
+</div>
+<div class="hidden md:flex gap-8 items-center">
+<nav class="flex gap-6">
+<a class="text-secondary-fixed font-label-md text-label-md uppercase tracking-widest" href="#">LIVE</a>
+<a class="text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-md text-label-md uppercase tracking-widest" href="#">MY AREA</a>
+<a class="text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-md text-label-md uppercase tracking-widest" href="#">CANDIDATES</a>
+<a class="text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-md text-label-md uppercase tracking-widest" href="#">GUIDE</a>
+</nav>
+<div class="h-6 w-px bg-outline-variant"></div>
+<span class="material-symbols-outlined text-secondary-fixed-dim">notifications</span>
+</div>
+</header>
+
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col pt-16 h-full relative overflow-hidden">
+<!-- Background Atmospheric Element -->
+
+<div class="flex flex-1 overflow-hidden">
+<!-- Map Container -->
+<section class="flex-1 relative flex flex-col p-6">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Regional Performance Map</h2>
+<p class="text-on-surface-variant font-body-md text-body-md">Live Constituency Breakdown | Phase IV Reporting</p>
+</div>
+<div class="flex gap-4 p-2 glass-panel rounded-lg">
+<div class="flex items-center gap-2 px-3">
+<div class="w-3 h-3 bg-primary-fixed-dim rounded-full shadow-[0_0_8px_rgba(0,218,243,0.6)]"></div>
+<span class="font-label-md text-label-md text-on-surface">New Party</span>
+</div>
+<div class="flex items-center gap-2 px-3">
+<div class="w-3 h-3 bg-secondary-fixed rounded-full shadow-[0_0_8px_rgba(255,225,109,0.6)]"></div>
+<span class="font-label-md text-label-md text-on-surface">Incumbents</span>
+</div>
+</div>
+</div>
+<!-- Interactive Map Area -->
+<div class="flex-1 bento-card rounded-xl relative overflow-hidden flex items-center justify-center border border-outline-variant/30">
+<!-- Placeholder for Detailed Map -->
+<div class="w-full h-full relative p-12">
+<img class="w-full h-full object-contain opacity-60 filter grayscale brightness-50" data-alt="A highly detailed and stylized digital choropleth map of Tamil Nadu, India, presented in a futuristic dark mode command center interface. The map regions are illuminated with glowing cyan and metallic gold colors, representing different political performance metrics. The background is a deep ebony black with subtle tech-inspired grid lines and data overlays. The lighting is focused and cinematic, creating a professional and authoritative atmosphere for political data analysis." data-location="Tamil Nadu" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8gfS6rHgGVvO22UNASVdKieG4oOODGOpQgE3iwSHk9XcYsba1jz_VyVOnOb068J5RuQqditnt792F9B4hfGwpMZqOpE_4uIUSBEgUTsAg1vWutg0_IFormvub5eQQ9lhADR16gJsgdAoGPIKV2gyO1Xql4mDG9rOwMcI0Gisy7x4SOLAfm7m7ekWIrd16GeZdxkz9XvRRCk_q-x2l4iOr4AhEem_FcVeE5T0pgnsRIUjQBL-8iKj_XP5m6ND8TEYE3qTV5lD4ir4"/>
+<!-- Overlayed Heatmap Nodes (Simulated Data) -->
+<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+<div class="absolute top-[20%] left-[45%] w-16 h-16 bg-primary-fixed-dim/20 rounded-full blur-xl animate-pulse"></div>
+<div class="absolute top-[40%] left-[55%] w-24 h-24 bg-secondary-fixed/10 rounded-full blur-2xl animate-pulse delay-700"></div>
+<div class="absolute bottom-[30%] left-[40%] w-20 h-20 bg-primary-fixed-dim/15 rounded-full blur-xl animate-pulse delay-500"></div>
+<!-- Constituency Markers -->
+<div class="absolute top-1/4 left-1/3 group cursor-pointer pointer-events-auto">
+<div class="w-3 h-3 bg-primary-fixed-dim rounded-full border-2 border-background ring-4 ring-primary-fixed-dim/20 transition-transform hover:scale-150"></div>
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 glass-panel p-3 opacity-0 group-hover:opacity-100 transition-opacity z-50">
+<p class="font-label-md text-label-md text-primary-fixed-dim mb-1">CHENNAI CENTRAL</p>
+<div class="flex justify-between text-[10px] text-on-surface-variant font-label-sm">
+<span>MARGIN</span>
+<span class="text-on-surface">12.4% LEAD</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high mt-2 overflow-hidden">
+<div class="h-full bg-primary-fixed-dim w-3/4"></div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-1/3 right-1/4 group cursor-pointer pointer-events-auto">
+<div class="w-3 h-3 bg-secondary-fixed rounded-full border-2 border-background ring-4 ring-secondary-fixed/20 transition-transform hover:scale-150"></div>
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 glass-panel p-3 opacity-0 group-hover:opacity-100 transition-opacity z-50">
+<p class="font-label-md text-label-md text-secondary-fixed mb-1">MADURAI</p>
+<div class="flex justify-between text-[10px] text-on-surface-variant font-label-sm">
+<span>MARGIN</span>
+<span class="text-on-surface">4.2% LEAD</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high mt-2 overflow-hidden">
+<div class="h-full bg-secondary-fixed w-1/2"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Map Floating Controls -->
+<div class="absolute bottom-6 left-6 flex flex-col gap-2">
+<button class="w-10 h-10 glass-panel flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+<button class="w-10 h-10 glass-panel flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">remove</span>
+</button>
+<button class="w-10 h-10 glass-panel flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">my_location</span>
+</button>
+</div>
+<!-- Legend Stats -->
+<div class="absolute bottom-6 right-6 p-4 glass-panel rounded-xl flex gap-8">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">TOTAL SEATS</p>
+<p class="font-headline-md text-headline-md text-on-surface">234</p>
+</div>
+<div class="h-10 w-px bg-outline-variant"></div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">DECLARED</p>
+<p class="font-headline-md text-headline-md text-secondary-fixed">142</p>
+</div>
+<div class="h-10 w-px bg-outline-variant"></div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">PENDING</p>
+<p class="font-headline-md text-headline-md text-on-surface">92</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Inspector Panel -->
+<aside class="w-80 h-full flex flex-col bg-surface-container-lowest border-l border-outline-variant p-6 overflow-y-auto">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed">analytics</span>
+                    Regional Summary
+                </h3>
+<!-- Region Breakdown Bento -->
+<div class="space-y-4">
+<!-- North Region -->
+<div class="p-4 bento-card rounded-lg group">
+<div class="flex justify-between items-center mb-3">
+<h4 class="font-label-md text-label-md text-on-surface uppercase font-bold tracking-tight">North TN</h4>
+<span class="text-[10px] bg-primary-fixed-dim/20 text-primary-fixed-dim px-2 py-0.5 rounded">HIGH VOLATILITY</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<p class="text-[10px] text-on-surface-variant mb-1 uppercase">Leading</p>
+<p class="font-body-lg text-body-lg text-primary-fixed-dim">64%</p>
+</div>
+<div>
+<p class="text-[10px] text-on-surface-variant mb-1 uppercase">Margin</p>
+<p class="font-body-lg text-body-lg text-on-surface">+8.2k</p>
+</div>
+</div>
+<div class="relative h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="absolute h-full left-0 bg-primary-fixed-dim" style="width: 64%"></div>
+<div class="absolute h-full right-0 bg-secondary-fixed" style="width: 36%"></div>
+</div>
+</div>
+<!-- West Region -->
+<div class="p-4 bento-card rounded-lg">
+<div class="flex justify-between items-center mb-3">
+<h4 class="font-label-md text-label-md text-on-surface uppercase font-bold tracking-tight">West TN</h4>
+<span class="text-[10px] bg-secondary-fixed/20 text-secondary-fixed px-2 py-0.5 rounded">INCUMBENT STRONGHOLD</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<p class="text-[10px] text-on-surface-variant mb-1 uppercase">Leading</p>
+<p class="font-body-lg text-body-lg text-secondary-fixed">78%</p>
+</div>
+<div>
+<p class="text-[10px] text-on-surface-variant mb-1 uppercase">Margin</p>
+<p class="font-body-lg text-body-lg text-on-surface">+22k</p>
+</div>
+</div>
+<div class="relative h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="absolute h-full left-0 bg-secondary-fixed" style="width: 78%"></div>
+<div class="absolute h-full right-0 bg-primary-fixed-dim" style="width: 22%"></div>
+</div>
+</div>
+<!-- South Region -->
+<div class="p-4 bento-card rounded-lg">
+<div class="flex justify-between items-center mb-3">
+<h4 class="font-label-md text-label-md text-on-surface uppercase font-bold tracking-tight">South TN</h4>
+<span class="text-[10px] bg-outline-variant/20 text-outline px-2 py-0.5 rounded">STALEMATE</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<p class="text-[10px] text-on-surface-variant mb-1 uppercase">Leading</p>
+<p class="font-body-lg text-body-lg text-on-surface">49%</p>
+</div>
+<div>
+<p class="text-[10px] text-on-surface-variant mb-1 uppercase">Margin</p>
+<p class="font-body-lg text-body-lg text-on-surface">+1.2k</p>
+</div>
+</div>
+<div class="relative h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="absolute h-full left-0 bg-primary-fixed-dim" style="width: 49%"></div>
+<div class="absolute h-full right-0 bg-secondary-fixed" style="width: 51%"></div>
+</div>
+</div>
+</div>
+<!-- Demographic Trends -->
+<div class="mt-8">
+<h4 class="font-label-md text-label-md text-secondary-fixed uppercase mb-4 tracking-widest">Key Trendlines</h4>
+<div class="space-y-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary-fixed-dim">trending_up</span>
+<div>
+<p class="text-xs text-on-surface leading-tight">Urban Youth Swing</p>
+<p class="text-[10px] text-on-surface-variant">+12% for New Party</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary-fixed">verified</span>
+<div>
+<p class="text-xs text-on-surface leading-tight">Rural Stability</p>
+<p class="text-[10px] text-on-surface-variant">Incumbents hold 85% base</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Export CTA -->
+<div class="mt-auto pt-6">
+<button class="w-full py-3 bg-primary-container text-on-primary-container font-label-md text-label-md uppercase font-bold tracking-widest active:scale-95 duration-200 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">download</span>
+                        Export Full Report
+                    </button>
+<p class="text-[9px] text-center text-outline mt-3 uppercase tracking-tighter">Last Update: 14:32:05 IST</p>
+</div>
+</aside>
+</div>
+</main>
+<!-- Interactive Layer for Micro-interactions -->
+<script>
+        // Simple ambient logic for the command center feel
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.querySelector('.absolute.inset-0.pointer-events-none');
+            const x = (e.clientX / window.innerWidth) * 20;
+            const y = (e.clientY / window.innerHeight) * 20;
+            if(glow) glow.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // Toggle Active States logic (simulated for UI)
+        const navItems = document.querySelectorAll('nav a');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                navItems.forEach(nav => nav.classList.replace('text-secondary-fixed', 'text-on-surface-variant'));
+                item.classList.replace('text-on-surface-variant', 'text-secondary-fixed');
+            });
+        });
+    </script>
+<!-- BottomNavBar (mobile) -->
+<nav class="xl:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 h-20 bg-surface-container-lowest/90 backdrop-blur-xl border-t border-outline-variant shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary-fixed  transition-all active:scale-90 duration-300" href="index.html">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span class="font-label-sm text-[10px]">OVERVIEW</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary-fixed  transition-all active:scale-90 duration-300" href="swing_analysis.html">
+<span class="material-symbols-outlined mb-1">trending_up</span>
+<span class="font-label-sm text-[10px]">SWING</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary-fixed  transition-all active:scale-90 duration-300" href="demographic.html">
+<span class="material-symbols-outlined mb-1">groups</span>
+<span class="font-label-sm text-[10px]">DEMO</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed bg-secondary-container/10 rounded-full px-3 py-1 transition-all active:scale-90 duration-300" href="regional.html">
+<span class="material-symbols-outlined mb-1">map</span>
+<span class="font-label-sm text-[10px]">REGIONAL</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary-fixed  transition-all active:scale-90 duration-300" href="coalition.html">
+<span class="material-symbols-outlined mb-1">analytics</span>
+<span class="font-label-sm text-[10px]">COALITION</span>
+</a>
+
+</nav>
+</body></html>
