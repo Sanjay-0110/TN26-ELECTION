@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TN26 Election Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-mark">TN26</span>
+                <div>
+                    <p class="brand-title">Election Command</p>
+                    <p class="brand-subtitle">Tamil Nadu 2026</p>
+                </div>
+            </div>
+            <nav class="nav-panel">
+                <a href="#overview" class="nav-link active">Overview</a>
+                <a href="#vote-share" class="nav-link">Vote Share</a>
+                <a href="#comparison" class="nav-link">Trend Analysis</a>
+                <a href="#constituencies" class="nav-link">Constituencies</a>
+                <a href="#export" class="nav-link">Export</a>
+            </nav>
+            <div class="sidebar-meta">
+                <p class="meta-label">Last update</p>
+                <p class="meta-value">Live feed · 00:12 ago</p>
+            </div>
+        </aside>
+
+        <main class="main-stage">
+            <section class="hero-panel" id="overview">
+                <div>
+                    <p class="eyebrow">ELECTION COMMAND CENTER</p>
+                    <h1>TN26 Election Dashboard</h1>
+                    <p class="hero-copy">High-density reporting for Tamil Nadu’s 2026 assembly results, built for instant insight and rapid decision-making.</p>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn-primary" id="reset-filters">Reset Filters</button>
+                    <button class="btn-secondary" onclick="exportData()">Export CSV</button>
+                </div>
+            </section>
+
+            <section class="panel panel--compact filters-panel">
+                <div class="panel-header">
+                    <p class="panel-title">Filters</p>
+                </div>
+                <div class="panel-grid">
+                    <div class="field-group">
+                        <label for="party-filter">Party</label>
+                        <select id="party-filter" multiple>
+                            <option value="">All Parties</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="margin-filter">Margin cap</label>
+                        <input type="range" id="margin-filter" min="0" max="100000" value="100000">
+                        <span class="field-note" id="margin-value">All</span>
+                    </div>
+                    <div class="field-group">
+                        <label for="search-box">Search</label>
+                        <input type="text" id="search-box" placeholder="Constituency or candidate">
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel summary-grid">
+                <article class="stat-card stat-card--primary">
+                    <p class="stat-label">Total Votes</p>
+                    <p class="stat-number" id="total-votes">0</p>
+                </article>
+                <article class="stat-card">
+                    <p class="stat-label">Constituencies</p>
+                    <p class="stat-number" id="total-constituencies">0</p>
+                </article>
+                <article class="stat-card">
+                    <p class="stat-label">Leading Party</p>
+                    <p class="stat-number" id="leading-party">-</p>
+                </article>
+                <article class="stat-card">
+                    <p class="stat-label">Highest Margin</p>
+                    <p class="stat-number" id="highest-margin">0</p>
+                </article>
+            </section>
+
+            <section class="panel panel--grid" id="vote-share">
+                <div class="chart-panel">
+                    <div class="panel-header">
+                        <p class="panel-title">Party Vote Share</p>
+                        <p class="panel-subtitle">Total share by party</p>
+                    </div>
+                    <canvas id="voteShareChart"></canvas>
+                </div>
+                <div class="chart-panel">
+                    <div class="panel-header">
+                        <p class="panel-title">Vote Share %</p>
+                        <p class="panel-subtitle">Relative strength across parties</p>
+                    </div>
+                    <canvas id="percentageChart"></canvas>
+                </div>
+            </section>
+
+            <section class="panel" id="comparison">
+                <div class="panel-header">
+                    <p class="panel-title">2021 vs 2026 Trend</p>
+                    <p class="panel-subtitle">Party seat performance comparison</p>
+                </div>
+                <canvas id="comparisonChart"></canvas>
+            </section>
+
+            <section class="panel table-panel" id="constituencies">
+                <div class="panel-header">
+                    <p class="panel-title">Constituency Results</p>
+                    <p class="panel-subtitle">Sortable, searchable, and filterable</p>
+                </div>
+                <div class="table-wrapper">
+                    <table id="resultsTable" class="results-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Constituency</th>
+                                <th onclick="sortTable(1)">Winner</th>
+                                <th onclick="sortTable(2)">Party</th>
+                                <th onclick="sortTable(3)">Trailing</th>
+                                <th onclick="sortTable(4)">Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <button id="prev-page" class="btn-secondary">Previous</button>
+                    <span id="page-info">Page 1</span>
+                    <button id="next-page" class="btn-secondary">Next</button>
+                </div>
+            </section>
+        </main>
+
+        <aside class="inspector-panel">
+            <div class="panel panel--stacked">
+                <div class="panel-header">
+                    <p class="panel-title">Inspector</p>
+                    <p class="panel-subtitle">High-priority highlights</p>
+                </div>
+                <div class="inspector-metric">
+                    <span class="metric-label">Top Party</span>
+                    <span class="metric-value" id="top-party-badge">TVK</span>
+                </div>
+                <div class="inspector-metric">
+                    <span class="metric-label">Margin Alert</span>
+                    <span class="metric-value metric-value--gold" id="margin-alert">> 25k</span>
+                </div>
+                <div class="inspector-metric">
+                    <span class="metric-label">Close Races</span>
+                    <span class="metric-value" id="close-races">18</span>
+                </div>
+                <div class="inspector-footer">
+                    <p class="status-chip status-chip--active">Live feed</p>
+                    <p class="status-chip status-chip--neutral">CSV source</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script src="js/data-loader.js"></script>
+    <script src="js/stats-calculator.js"></script>
+    <script src="js/chart-builder.js"></script>
+    <script src="js/table-manager.js"></script>
+    <script src="js/filter-handler.js"></script>
+    <script src="js/ui-controller.js"></script>
+</body>
+</html>
