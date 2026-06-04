@@ -238,7 +238,7 @@ party_seats = (
 party_seats["Change"] = party_seats["Seats_2026"] - party_seats["Seats_2021"]
 
 # Vote share 2026
-vote_share = pd.read_csv('C:/Code Note/TN26-ELECTION/clean_data/tn26_party_vote_share.csv')
+vote_share = pd.read_csv('clean_data/tn26_party_vote_share.csv')
 
 # District-level summary (top districts)
 district_data = result26.groupby('District')['Lead_Party_Name'].value_counts().unstack(fill_value=0).reset_index()
