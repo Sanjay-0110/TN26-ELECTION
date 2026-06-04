@@ -1,126 +1,119 @@
 // ===================================
 // table-manager.js
 // ===================================
-// Manages the results table with sorting and pagination
+// Manages the constituency results table with sorting, filtering, pagination.
+// Used primarily by index.html (index-shifts-tbody) and any page that has
+// a full data table (tableBody).
 
 let tableState = {
-    currentPage: 1,
-    itemsPerPage: 15,
-    sortColumn: 0,
-    sortDirection: 'asc',
-    filteredData: []
+    currentPage:   1,
+    itemsPerPage:  15,
+    sortColumn:    'Margin',
+    sortDir:       'desc',
+    filteredData:  [],
 };
 
-// Populate table with data
-function populateTable(data) {
+// ── Full results table (index page if wired up) ──────────────────────────────
+
+function initTable() {
+    if (!electionData.results2026.length) return;
+    tableState.filteredData = [...electionData.results2026];
+    _sortData();
+    _renderTable();
+    _initPagination();
+    console.log('[table] Initialized with', tableState.filteredData.length, 'rows');
+}
+
+function _renderTable() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '';
-    
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No results found</td></tr>';
+    if (!tbody) return;
+
+    if (tableState.filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-on-surface-variant">No results found</td></tr>`;
+        _updatePagInfo(0);
         return;
     }
-    
-    // Calculate pagination
-    const startIndex = (tableState.currentPage - 1) * tableState.itemsPerPage;
-    const endIndex = startIndex + tableState.itemsPerPage;
-    const paginatedData = data.slice(startIndex, endIndex);
-    
-    // Populate rows
-    paginatedData.forEach(row => {
-        const tr = document.createElement('tr');
-        
-        const constituency = row['Constituency'] || 'N/A';
-        const winner = row['Leading Candidate'] || 'N/A';
-        const party = cleanPartyName(row['Leading Party'] || 'N/A');
-        const trailing = row['Trailing Candidate'] || 'N/A';
-        const margin = row['Margin'] ? formatNumber(row['Margin']) : 'N/A';
-        
-        tr.innerHTML = `
-            <td>${constituency}</td>
-            <td>${winner}</td>
-            <td><span class="party-badge">${party}</span></td>
-            <td>${trailing}</td>
-            <td style="font-weight: 600; color: #667eea;">${margin}</td>
-        `;
-        
-        tbody.appendChild(tr);
+
+    const start = (tableState.currentPage - 1) * tableState.itemsPerPage;
+    const slice = tableState.filteredData.slice(start, start + tableState.itemsPerPage);
+
+    tbody.innerHTML = slice.map(row => {
+        const constituency = row['Constituency']      || '—';
+        const winner       = row['Leading Candidate'] || '—';
+        const party        = shortPartyName(row['Leading Party']);
+        const trailing     = row['Trailing Candidate']|| '—';
+        const margin       = formatNumber(row['Margin'] || 0);
+        const isNP         = party === 'TVK';
+        const partyBadgeStyle = `background:${PARTY_COLORS[party] || '#333'};color:#000;`;
+
+        return `<tr class="zebra-row hover:bg-surface-container transition-colors">
+            <td class="px-6 py-4 font-semibold text-on-surface">${constituency}</td>
+            <td class="px-6 py-4 text-on-surface-variant">${winner}</td>
+            <td class="px-6 py-4">
+                <span class="party-badge px-2 py-1 rounded text-[10px] font-bold" style="${partyBadgeStyle}">${party}</span>
+            </td>
+            <td class="px-6 py-4 text-on-surface-variant">${trailing}</td>
+            <td class="px-6 py-4 font-label-md" style="color:${isNP ? '#00daf3' : '#ffe16d'}">${margin}</td>
+        </tr>`;
+    }).join('');
+
+    _updatePagInfo(tableState.filteredData.length);
+}
+
+function _updatePagInfo(total) {
+    const totalPages = Math.max(1, Math.ceil(total / tableState.itemsPerPage));
+    const el = document.getElementById('page-info');
+    if (el) el.textContent = `Page ${tableState.currentPage} of ${totalPages}`;
+
+    const prev = document.getElementById('prev-page');
+    const next = document.getElementById('next-page');
+    if (prev) prev.disabled = tableState.currentPage === 1;
+    if (next) next.disabled = tableState.currentPage >= totalPages;
+}
+
+function _initPagination() {
+    document.getElementById('prev-page')?.addEventListener('click', () => {
+        if (tableState.currentPage > 1) { tableState.currentPage--; _renderTable(); }
     });
-    
-    // Update pagination info
-    updatePaginationInfo(data.length);
+    document.getElementById('next-page')?.addEventListener('click', () => {
+        const max = Math.ceil(tableState.filteredData.length / tableState.itemsPerPage);
+        if (tableState.currentPage < max) { tableState.currentPage++; _renderTable(); }
+    });
 }
 
-// Update pagination
-function updatePaginationInfo(totalItems) {
-    const totalPages = Math.ceil(totalItems / tableState.itemsPerPage);
-    const pageInfo = document.getElementById('page-info');
-    pageInfo.textContent = `Page ${tableState.currentPage} of ${totalPages}`;
-    
-    // Disable/enable buttons
-    document.getElementById('prev-page').disabled = tableState.currentPage === 1;
-    document.getElementById('next-page').disabled = tableState.currentPage === totalPages;
-}
-
-// Sort table data
-function sortTable(columnIndex) {
-    // Toggle sort direction
-    if (tableState.sortColumn === columnIndex) {
-        tableState.sortDirection = tableState.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        tableState.sortColumn = columnIndex;
-        tableState.sortDirection = 'asc';
-    }
-    
-    const columns = ['Constituency', 'Leading Candidate', 'Leading Party', 'Trailing Candidate', 'Margin'];
-    const sortBy = columns[columnIndex];
-    
+function _sortData() {
+    const col = tableState.sortColumn;
     tableState.filteredData.sort((a, b) => {
-        let aVal = a[sortBy] || '';
-        let bVal = b[sortBy] || '';
-        
-        // Try to parse as numbers if sorting by Margin
-        if (sortBy === 'Margin') {
-            aVal = parseInt(aVal) || 0;
-            bVal = parseInt(bVal) || 0;
+        let av = a[col] || '', bv = b[col] || '';
+        if (col === 'Margin' || col === 'Constituency No.') {
+            av = parseInt(av) || 0;
+            bv = parseInt(bv) || 0;
         } else {
-            aVal = String(aVal).toLowerCase();
-            bVal = String(bVal).toLowerCase();
+            av = String(av).toLowerCase();
+            bv = String(bv).toLowerCase();
         }
-        
-        if (tableState.sortDirection === 'asc') {
-            return aVal > bVal ? 1 : -1;
-        } else {
-            return aVal < bVal ? 1 : -1;
-        }
-    });
-    
-    tableState.currentPage = 1; // Reset to first page
-    populateTable(tableState.filteredData);
-}
-
-// Initialize pagination buttons
-function initPagination() {
-    document.getElementById('prev-page').addEventListener('click', () => {
-        if (tableState.currentPage > 1) {
-            tableState.currentPage--;
-            populateTable(tableState.filteredData);
-        }
-    });
-    
-    document.getElementById('next-page').addEventListener('click', () => {
-        const totalPages = Math.ceil(tableState.filteredData.length / tableState.itemsPerPage);
-        if (tableState.currentPage < totalPages) {
-            tableState.currentPage++;
-            populateTable(tableState.filteredData);
-        }
+        if (tableState.sortDir === 'asc') return av > bv ? 1 : -1;
+        return av < bv ? 1 : -1;
     });
 }
 
-// Initialize table
-function initTable() {
-    tableState.filteredData = [...electionData.results2026];
-    populateTable(tableState.filteredData);
-    initPagination();
-    console.log('✓ Table initialized');
+function sortTable(col) {
+    if (tableState.sortColumn === col) {
+        tableState.sortDir = tableState.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        tableState.sortColumn = col;
+        tableState.sortDir    = 'asc';
+    }
+    tableState.currentPage = 1;
+    _sortData();
+    _renderTable();
+}
+
+// ── Inspector panel (index.html sidebar stats) ───────────────────────────────
+
+function updateInspectorPanel(data) {
+    const filtered = data || tableState.filteredData || electionData.results2026;
+    setText('top-party-badge',  stats.leadingParty || '—');
+    setText('margin-alert',     `> ${formatNumber(stats.highestMargin)}`);
+    setText('close-races',      stats.closeRaces ?? countCloseRaces());
 }

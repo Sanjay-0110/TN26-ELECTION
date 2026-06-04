@@ -137,6 +137,16 @@
             },
         }
     </script>
+    <!-- External chart library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Dashboard scripts (order matters) -->
+    <script src="js/data-loader.js"></script>
+    <script src="js/stats-calculator.js"></script>
+    <script src="js/chart-builder.js"></script>
+    <script src="js/table-manager.js"></script>
+    <script src="js/filter-handler.js"></script>
+    <script src="js/ui-controller.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
 <!-- Sidebar Navigation Drawer -->
@@ -189,7 +199,7 @@
 <div class="glass-card p-6 flex flex-col justify-between">
 <div>
 <p class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase tracking-widest mb-2">Total Seats</p>
-<h2 class="font-display-lg text-display-lg text-on-surface">234</h2>
+<h2 id="swing-hero-total" class="font-display-lg text-display-lg text-on-surface">234</h2>
 </div>
 <div class="flex items-center gap-2 mt-4 text-primary-fixed-dim">
 <span class="material-symbols-outlined text-[18px]">verified</span>
@@ -199,7 +209,7 @@
 <div class="glass-card p-6 flex flex-col justify-between border-l-4 border-l-primary-fixed-dim">
 <div>
 <p class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase tracking-widest mb-2">New Party Gains</p>
-<h2 class="font-display-lg text-display-lg text-primary-fixed-dim">+108</h2>
+<h2 id="swing-hero-np-gains" class="font-display-lg text-display-lg text-primary-fixed-dim">+108</h2>
 </div>
 <div class="flex items-center gap-2 mt-4 text-primary-fixed-dim">
 <span class="material-symbols-outlined text-[18px]">trending_up</span>
@@ -209,7 +219,7 @@
 <div class="glass-card p-6 flex flex-col justify-between">
 <div>
 <p class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase tracking-widest mb-2">Swing Seats</p>
-<h2 class="font-display-lg text-display-lg text-on-surface">112</h2>
+<h2 id="swing-hero-swing-seats" class="font-display-lg text-display-lg text-on-surface">112</h2>
 </div>
 <div class="flex items-center gap-2 mt-4 text-error">
 <span class="material-symbols-outlined text-[18px]">swap_horiz</span>
@@ -252,7 +262,7 @@
 <th class="py-4 font-label-sm text-label-sm text-secondary-fixed uppercase tracking-wider">Swing %</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-outline-variant/30">
+<tbody id="swing-matrix-tbody" class="divide-y divide-outline-variant/30">
 <tr class="hover:bg-white/[0.02] transition-colors">
 <td class="py-5 font-title-lg text-title-lg text-on-surface">DMK+</td>
 <td class="py-5 text-on-surface-variant font-label-md">84</td>
@@ -298,31 +308,34 @@
 <div class="space-y-8 mt-4">
 <div>
 <div class="flex justify-between items-end mb-2">
-<span class="font-label-md text-on-surface">New Party (NP)</span>
-<span class="font-label-sm text-primary-fixed-dim">28.4% (+28.4%)</span>
+<span class="font-label-md text-on-surface">New Party (TVK)</span>
+<span id="churn-pct-np" class="font-label-sm text-primary-fixed-dim">28.4%</span>
 </div>
 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-<div class="bg-primary-fixed-dim h-full w-[28.4%] rounded-full shadow-[0_0_10px_rgba(0,218,243,0.5)]"></div>
+<div id="churn-bar-np" class="bg-primary-fixed-dim h-full rounded-full shadow-[0_0_10px_rgba(0,218,243,0.5)]" style="width:28.4%"></div>
 </div>
 </div>
 <div>
 <div class="flex justify-between items-end mb-2">
 <span class="font-label-md text-on-surface">DMK+ Alliance</span>
-<span class="font-label-sm text-secondary-fixed-dim">34.2% (-11.1%)</span>
+<span id="churn-pct-dmx" class="font-label-sm text-secondary-fixed-dim">34.2%</span>
 </div>
 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-<div class="bg-secondary-fixed-dim h-full w-[34.2%] rounded-full"></div>
+<div id="churn-bar-dmx" class="bg-secondary-fixed-dim h-full rounded-full" style="width:34.2%"></div>
 </div>
 </div>
 <div>
 <div class="flex justify-between items-end mb-2">
 <span class="font-label-md text-on-surface">AIADMK+ Alliance</span>
-<span class="font-label-sm text-outline">21.5% (-11.8%)</span>
+<span id="churn-pct-ady" class="font-label-sm text-outline">21.5%</span>
 </div>
 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-<div class="bg-outline h-full w-[21.5%] rounded-full"></div>
+<div id="churn-bar-ady" class="bg-outline h-full rounded-full" style="width:21.5%"></div>
 </div>
 </div>
+</div>
+<div class="mt-6" style="height:280px; position:relative;">
+  <canvas id="swingVoteShareChart"></canvas>
 </div>
 </div>
 <!-- Background aesthetic element -->

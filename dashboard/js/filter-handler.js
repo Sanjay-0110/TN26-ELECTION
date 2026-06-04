@@ -1,131 +1,90 @@
 // ===================================
 // filter-handler.js
 // ===================================
-// Handles all filtering and search functionality
+// Party / margin / keyword filters for the full results table.
 
 let filterState = {
-    selectedParties: [],
-    marginRange: 100000,
-    searchQuery: ''
+    party:      '',
+    maxMargin:  200000,
+    search:     ''
 };
 
-// Populate party filter dropdown
 function initPartyFilter() {
-    const parties = getUniqueParties();
-    const filterSelect = document.getElementById('party-filter');
-    
-    // Clear existing options except the first one
-    while (filterSelect.options.length > 1) {
-        filterSelect.remove(1);
-    }
-    
-    // Add party options
-    parties.forEach(party => {
-        const option = document.createElement('option');
-        option.value = party;
-        option.textContent = party;
-        filterSelect.appendChild(option);
+    const sel = document.getElementById('party-filter');
+    if (!sel) return;
+
+    // Clear all but the first placeholder option
+    while (sel.options.length > 1) sel.remove(1);
+
+    // Collect unique short party names from 2026 results
+    const parties = [...new Set(
+        electionData.results2026.map(r => shortPartyName(r['Leading Party']))
+    )].sort();
+
+    parties.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = p;
+        sel.appendChild(opt);
     });
-    
-    // Add event listener
-    filterSelect.addEventListener('change', handleFilterChange);
-    console.log('✓ Party filter initialized with', parties.length, 'parties');
+
+    console.log('[filter] Party filter loaded with', parties.length, 'parties');
 }
 
-// Handle filter changes
+function initFilterHandlers() {
+    document.getElementById('party-filter')  ?.addEventListener('change',  handleFilterChange);
+    document.getElementById('margin-filter') ?.addEventListener('input',   handleFilterChange);
+    document.getElementById('search-box')    ?.addEventListener('input',   handleFilterChange);
+    document.getElementById('reset-filters') ?.addEventListener('click',   resetFilters);
+}
+
 function handleFilterChange() {
-    const partySelect = document.getElementById('party-filter');
-    const marginRange = document.getElementById('margin-filter');
-    const searchBox = document.getElementById('search-box');
-    
-    // Get selected parties
-    filterState.selectedParties = Array.from(partySelect.selectedOptions).map(opt => opt.value);
-    filterState.marginRange = parseInt(marginRange.value);
-    filterState.searchQuery = searchBox.value.toLowerCase();
-    
-    // Update margin display
-    document.getElementById('margin-value').textContent = 
-        filterState.marginRange === 100000 ? 'All' : formatNumber(filterState.marginRange);
-    
-    // Apply filters
+    filterState.party     = document.getElementById('party-filter')?.value  || '';
+    filterState.maxMargin = parseInt(document.getElementById('margin-filter')?.value) || 200000;
+    filterState.search    = (document.getElementById('search-box')?.value || '').toLowerCase();
+
+    const display = document.getElementById('margin-value');
+    if (display) display.textContent = filterState.maxMargin >= 200000 ? 'All' : formatNumber(filterState.maxMargin);
+
     applyFilters();
 }
 
-// Apply all filters
 function applyFilters() {
-    let filtered = [...electionData.results2026];
-    
-    // Filter by party
-    if (filterState.selectedParties.length > 0) {
-        filtered = filtered.filter(row => {
-            const winningParty = cleanPartyName(row['Leading Party']);
-            return filterState.selectedParties.includes(winningParty);
-        });
+    let data = [...electionData.results2026];
+
+    if (filterState.party) {
+        data = data.filter(r => shortPartyName(r['Leading Party']) === filterState.party);
     }
-    
-    // Filter by margin
-    filtered = filtered.filter(row => {
-        const margin = parseInt(row['Margin']) || 0;
-        return margin <= filterState.marginRange;
-    });
-    
-    // Filter by search query
-    if (filterState.searchQuery) {
-        filtered = filtered.filter(row => {
-            const constituency = (row['Constituency'] || '').toLowerCase();
-            const winner = (row['Leading Candidate'] || '').toLowerCase();
-            const trailing = (row['Trailing Candidate'] || '').toLowerCase();
-            
-            return constituency.includes(filterState.searchQuery) ||
-                   winner.includes(filterState.searchQuery) ||
-                   trailing.includes(filterState.searchQuery);
-        });
+    data = data.filter(r => (parseInt(r['Margin']) || 0) <= filterState.maxMargin);
+
+    if (filterState.search) {
+        data = data.filter(r =>
+            (r['Constituency']       || '').toLowerCase().includes(filterState.search) ||
+            (r['Leading Candidate']  || '').toLowerCase().includes(filterState.search) ||
+            (r['Trailing Candidate'] || '').toLowerCase().includes(filterState.search)
+        );
     }
-    
-    // Update UI
-    tableState.filteredData = filtered;
-    tableState.currentPage = 1;
-    populateTable(tableState.filteredData);
-    updateInspectorPanel(tableState.filteredData);
-    
-    console.log(`🔍 Filters applied: ${filtered.length} results`);
+
+    tableState.filteredData = data;
+    tableState.currentPage  = 1;
+    _renderTable();           // defined in table-manager.js
+    updateInspectorPanel(data);
+    console.log(`[filter] ${data.length} results after filters`);
 }
 
-// Reset all filters
 function resetFilters() {
-    document.getElementById('party-filter').selectedIndex = 0;
-    document.getElementById('margin-filter').value = 100000;
-    document.getElementById('search-box').value = '';
-    
-    filterState = {
-        selectedParties: [],
-        marginRange: 100000,
-        searchQuery: ''
-    };
-    
-    document.getElementById('margin-value').textContent = 'All';
-    
-    tableState.filteredData = [...electionData.results2026];
-    tableState.currentPage = 1;
-    populateTable(tableState.filteredData);
-    updateInspectorPanel(tableState.filteredData);
-    
-    console.log('✓ Filters reset');
-}
+    const pf = document.getElementById('party-filter');
+    const mf = document.getElementById('margin-filter');
+    const sb = document.getElementById('search-box');
+    if (pf) pf.selectedIndex = 0;
+    if (mf) mf.value = 200000;
+    if (sb) sb.value = '';
 
-// Initialize filter listeners
-function initFilterHandlers() {
-    // Party filter
-    document.getElementById('party-filter').addEventListener('change', handleFilterChange);
-    
-    // Margin range
-    document.getElementById('margin-filter').addEventListener('input', handleFilterChange);
-    
-    // Search box
-    document.getElementById('search-box').addEventListener('input', handleFilterChange);
-    
-    // Reset button
-    document.getElementById('reset-filters').addEventListener('click', resetFilters);
-    
-    console.log('✓ Filter handlers initialized');
+    filterState = { party: '', maxMargin: 200000, search: '' };
+    const display = document.getElementById('margin-value');
+    if (display) display.textContent = 'All';
+
+    tableState.filteredData = [...electionData.results2026];
+    tableState.currentPage  = 1;
+    _renderTable();
+    updateInspectorPanel();
 }

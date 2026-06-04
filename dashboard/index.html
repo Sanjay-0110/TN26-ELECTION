@@ -145,6 +145,16 @@
           },
         }
     </script>
+    <!-- External chart library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Dashboard scripts (order matters) -->
+    <script src="js/data-loader.js"></script>
+    <script src="js/stats-calculator.js"></script>
+    <script src="js/chart-builder.js"></script>
+    <script src="js/table-manager.js"></script>
+    <script src="js/filter-handler.js"></script>
+    <script src="js/ui-controller.js"></script>
 </head>
 <body class="flex min-h-screen">
 <!-- Sidebar Navigation Drawer -->
@@ -219,7 +229,9 @@
 <span class="material-symbols-outlined text-6xl text-primary-fixed-dim">swap_horiz</span>
 </div>
 <p class="font-label-sm text-label-sm text-secondary-fixed mb-1">AGGREGATE SWING (NP)</p>
-<h3 class="font-display-lg text-display-lg text-primary-fixed-dim">+28.4<span class="text-2xl font-light">%</span></h3>
+<h3 class="font-display-lg text-display-lg text-primary-fixed-dim">
+  <span id="card-aggregate-swing">+28.4</span><span class="text-2xl font-light">%</span>
+</h3>
 <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-1 mt-2">
 <span class="material-symbols-outlined text-primary-fixed text-sm">moving</span> 
                     Historic High
@@ -237,30 +249,34 @@
 <svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
 <circle cx="50" cy="50" fill="none" r="45" stroke="#1E1E1E" stroke-width="8"></circle>
 <!-- NP Segment (128/234 = 55%) -->
-<circle cx="50" cy="50" fill="none" r="45" stroke="#00daf3" stroke-dasharray="172 282.7" stroke-linecap="round" stroke-width="8"></circle>
+<circle id="ring-np" cx="50" cy="50" fill="none" r="45"
+  stroke="#00daf3" stroke-dasharray="172 282.7"
+  stroke-linecap="round" stroke-width="8"></circle>
 <!-- DM-X Segment (84/234 = 36%) -->
-<circle cx="50" cy="50" fill="none" r="45" stroke="#ffe16d" stroke-dasharray="113 282.7" stroke-dashoffset="-172" stroke-linecap="round" stroke-width="8"></circle>
+<circle id="ring-dmx" cx="50" cy="50" fill="none" r="45"
+  stroke="#ffe16d" stroke-dasharray="113 282.7" stroke-dashoffset="-172"
+  stroke-linecap="round" stroke-width="8"></circle>
 </svg>
 <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
 <p class="font-label-sm text-label-sm text-on-surface-variant">TOTAL SEATS</p>
-<h2 class="font-display-lg text-display-lg text-on-surface">234</h2>
+<h2 id="ring-total" class="font-display-lg text-display-lg text-on-surface">234</h2>
 <span class="font-label-md text-label-md text-secondary-fixed">MAJORITY SECURED</span>
 </div>
 </div>
 <div class="grid grid-cols-3 gap-12 mt-12 w-full max-w-lg">
 <div class="text-center">
 <p class="font-label-sm text-label-sm text-primary-fixed mb-1">New Party</p>
-<p class="font-headline-lg text-headline-lg">128</p>
+<p id="ring-label-np" class="font-headline-lg text-headline-lg">128</p>
 <div class="w-full h-1 bg-primary-fixed mt-2 rounded-full"></div>
 </div>
 <div class="text-center">
 <p class="font-label-sm text-label-sm text-secondary-fixed mb-1">DM-X</p>
-<p class="font-headline-lg text-headline-lg text-on-surface">84</p>
+<p id="ring-label-dmx" class="font-headline-lg text-headline-lg text-on-surface">59</p>
 <div class="w-full h-1 bg-secondary-fixed mt-2 rounded-full"></div>
 </div>
 <div class="text-center">
 <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">AD-Y</p>
-<p class="font-headline-lg text-headline-lg text-on-surface-variant">22</p>
+<p id="ring-label-ad-y" class="font-headline-lg text-headline-lg text-on-surface-variant">46</p>
 <div class="w-full h-1 bg-outline mt-2 rounded-full"></div>
 </div>
 </div>
@@ -395,6 +411,7 @@
 <span class="px-2 py-1 rounded bg-primary-fixed/10 text-primary-fixed text-[10px] font-bold">FLIPPED</span>
 </td>
 </tr>
+<tbody id="index-shifts-tbody" class="text-body-md text-body-md text-on-surface-variant"></tbody>
 </tbody>
 </table>
 </div>

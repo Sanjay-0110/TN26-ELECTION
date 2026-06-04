@@ -1,180 +1,133 @@
 // ===================================
 // stats-calculator.js
 // ===================================
-// Calculates statistics from election data
+// Computes all derived statistics from the loaded CSVs.
+// Must be loaded AFTER data-loader.js.
 
 let stats = {};
 
-// Calculate total votes
-function calculateTotalVotes() {
-    let total = 0;
-    electionData.partyVotes.forEach(row => {
-        const voteCount = parseVoteCount(row['Vote Share']);
-        total += voteCount;
-    });
-    return total;
-}
+// ── Seat counts ──────────────────────────────────────────────────────────────
 
-// Calculate total constituencies
-function calculateTotalConstituencies() {
-    return new Set(electionData.results2026.map(row => row['Constituency'])).size;
-}
-
-// Find leading party
-function findLeadingParty() {
-    if (electionData.partyVotes.length === 0) return 'N/A';
-    
-    let leadingParty = electionData.partyVotes[0];
-    let maxVotes = parseVoteCount(leadingParty['Vote Share']);
-    
-    electionData.partyVotes.forEach(row => {
-        const votes = parseVoteCount(row['Vote Share']);
-        if (votes > maxVotes) {
-            maxVotes = votes;
-            leadingParty = row;
-        }
-    });
-    
-    return leadingParty['Party'].split('{')[0].trim();
-}
-
-// Find highest margin
-function findHighestMargin() {
-    let maxMargin = 0;
-    
-    electionData.results2026.forEach(row => {
-        const margin = parseInt(row['Margin']) || 0;
-        if (margin > maxMargin) {
-            maxMargin = margin;
-        }
-    });
-    
-    return maxMargin;
-}
-
-// Calculate vote share by party
-function calculateVoteShareByParty() {
-    const voteShare = {};
-    
-    electionData.partyVotes.forEach(row => {
-        const party = row['Party'].split('{')[0].trim();
-        const percentage = parsePercentage(row['Party']);
-        const votes = parseVoteCount(row['Vote Share']);
-        
-        voteShare[party] = {
-            percentage: percentage,
-            votes: votes,
-            label: party
-        };
-    });
-    
-    return voteShare;
-}
-
-// Calculate seats won by party
-function calculateSeatsByParty() {
+/**
+ * Count seats won by each *short* party name from results_2026.csv.
+ * Returns { TVK: 108, DMK: 59, ADMK: 47, … }
+ */
+function calculateSeatsByParty2026() {
     const seats = {};
-    
     electionData.results2026.forEach(row => {
-        const party = cleanPartyName(row['Leading Party']);
-        if (!seats[party]) {
-            seats[party] = 0;
-        }
-        seats[party]++;
+        const p = shortPartyName(row['Leading Party']);
+        seats[p] = (seats[p] || 0) + 1;
     });
-    
     return seats;
 }
 
-// Calculate average margin by party
-function calculateAverageMarginByParty() {
-    const margins = {};
-    const counts = {};
-    
-    electionData.results2026.forEach(row => {
-        const party = cleanPartyName(row['Leading Party']);
-        const margin = parseInt(row['Margin']) || 0;
-        
-        if (!margins[party]) {
-            margins[party] = 0;
-            counts[party] = 0;
-        }
-        margins[party] += margin;
-        counts[party]++;
-    });
-    
-    const avgMargins = {};
-    for (let party in margins) {
-        avgMargins[party] = (margins[party] / counts[party]).toFixed(0);
-    }
-    
-    return avgMargins;
-}
-
-// Calculate party performance (2021 vs 2026)
-function comparePartyPerformance() {
-    const comparison = {};
-    
-    // Get 2026 data
-    const seats2026 = calculateSeatsByParty();
-    
-    // Count seats from 2021 data if available
-    const seats2021 = {};
+/**
+ * Count seats won by each party from tn21_election_results.csv.
+ * The 2021 CSV has a column called "Party" for the winning candidate's party.
+ */
+function calculateSeatsByParty2021() {
+    const seats = {};
     electionData.results2021.forEach(row => {
-        const party = cleanPartyName(row['Leading Party'] || row['Winner Party']);
-        if (!seats2021[party]) {
-            seats2021[party] = 0;
-        }
-        seats2021[party]++;
+        const p = (row['Party'] || '').trim();
+        if (p) seats[p] = (seats[p] || 0) + 1;
     });
-    
-    // Build comparison
-    const allParties = new Set([...Object.keys(seats2026), ...Object.keys(seats2021)]);
-    allParties.forEach(party => {
-        comparison[party] = {
-            '2021': seats2021[party] || 0,
-            '2026': seats2026[party] || 0,
-            'change': (seats2026[party] || 0) - (seats2021[party] || 0)
-        };
-    });
-    
-    return comparison;
+    return seats;
 }
 
-// Calculate number of close races
-function countCloseRaces(data, threshold = 5000) {
-    if (!Array.isArray(data)) {
-        return 0;
-    }
-    return data.reduce((count, row) => {
-        const margin = parseInt(row['Margin']) || 0;
-        return count + (margin > 0 && margin <= threshold ? 1 : 0);
+// ── Vote totals ──────────────────────────────────────────────────────────────
+
+function calculateTotalVotes() {
+    return electionData.partyVotes.reduce((sum, row) => {
+        return sum + parseVoteCount(row['Vote Share']);
     }, 0);
 }
 
-// Calculate statistics
+// ── Party vote share array (sorted by votes desc) ───────────────────────────
+
+function buildPartyVoteArray() {
+    return electionData.partyVotes.map(row => ({
+        name:    row['Party'].split('{')[0].trim(),
+        pct:     parsePercentage(row['Party']),
+        votes:   parseVoteCount(row['Vote Share'])
+    })).sort((a, b) => b.votes - a.votes);
+}
+
+// ── Margin stats ─────────────────────────────────────────────────────────────
+
+function findHighestMargin() {
+    return electionData.results2026.reduce((max, row) => {
+        const m = parseInt(row['Margin']) || 0;
+        return m > max ? m : max;
+    }, 0);
+}
+
+function countCloseRaces(threshold = 5000) {
+    return electionData.results2026.filter(row => {
+        const m = parseInt(row['Margin']) || 0;
+        return m > 0 && m <= threshold;
+    }).length;
+}
+
+function avgMarginByParty() {
+    const sums = {}, counts = {};
+    electionData.results2026.forEach(row => {
+        const p = shortPartyName(row['Leading Party']);
+        const m = parseInt(row['Margin']) || 0;
+        sums[p]   = (sums[p]   || 0) + m;
+        counts[p] = (counts[p] || 0) + 1;
+    });
+    const result = {};
+    Object.keys(sums).forEach(p => { result[p] = Math.round(sums[p] / counts[p]); });
+    return result;
+}
+
+// ── Alliance helpers (mapping to the HTML's DM-X / AD-Y / NEW labels) ────────
+
+const ALLIANCE_MAP = {
+    // DM-X Alliance
+    DMK: 'DM-X', INC: 'DM-X', VCK: 'DM-X', CPI: 'DM-X', 'CPI(M)': 'DM-X',
+    IUML: 'DM-X', 'CPI(ML)': 'DM-X',
+    // AD-Y Alliance
+    ADMK: 'AD-Y', BJP: 'AD-Y', DMDK: 'AD-Y', PMK: 'AD-Y', AMMK: 'AD-Y',
+    // New Alliance (TVK-led)
+    TVK: 'NEW',  NTK: 'NEW',
+};
+
+function getAlliance(shortName) {
+    return ALLIANCE_MAP[shortName] || 'OTHER';
+}
+
+function seatsByAlliance(seatsObj) {
+    const alliances = {};
+    Object.entries(seatsObj).forEach(([p, s]) => {
+        const a = getAlliance(p);
+        alliances[a] = (alliances[a] || 0) + s;
+    });
+    return alliances;
+}
+
+// ── Master calculate ─────────────────────────────────────────────────────────
+
 function calculateStats() {
+    const seats26 = calculateSeatsByParty2026();
+    const seats21 = calculateSeatsByParty2021();
+
     stats = {
-        totalVotes: calculateTotalVotes(),
-        totalConstituencies: calculateTotalConstituencies(),
-        leadingParty: findLeadingParty(),
-        highestMargin: findHighestMargin(),
-        voteShareByParty: calculateVoteShareByParty(),
-        seatsByParty: calculateSeatsByParty(),
-        avgMarginByParty: calculateAverageMarginByParty(),
-        partyComparison: comparePartyPerformance()
+        totalVotes:      calculateTotalVotes(),
+        totalSeats:      electionData.results2026.length,
+        seats2026:       seats26,
+        seats2021:       seats21,
+        partyVoteArray:  buildPartyVoteArray(),
+        highestMargin:   findHighestMargin(),
+        closeRaces:      countCloseRaces(5000),
+        avgMargin:       avgMarginByParty(),
+        alliance2026:    seatsByAlliance(seats26),
     };
-    
-    console.log('📊 Statistics calculated:', stats);
+
+    // Leading party by seats
+    stats.leadingParty = Object.entries(seats26)
+        .sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'N/A';
+
+    console.log('[stats] Calculated:', stats);
     return stats;
-}
-
-// Format number with commas
-function formatNumber(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-
-// Format percentage
-function formatPercentage(num) {
-    return (num || 0).toFixed(2) + '%';
 }

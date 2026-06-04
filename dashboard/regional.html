@@ -134,6 +134,16 @@
             }
         }
     </script>
+    <!-- External chart library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Dashboard scripts (order matters) -->
+    <script src="js/data-loader.js"></script>
+    <script src="js/stats-calculator.js"></script>
+    <script src="js/chart-builder.js"></script>
+    <script src="js/table-manager.js"></script>
+    <script src="js/filter-handler.js"></script>
+    <script src="js/ui-controller.js"></script>
 </head>
 <body class="flex h-screen w-full font-body-md text-on-surface">
 <!-- Sidebar Navigation Drawer -->
@@ -288,16 +298,16 @@
 <div class="grid grid-cols-2 gap-4 mb-4">
 <div>
 <p class="text-[10px] text-on-surface-variant mb-1 uppercase">Leading</p>
-<p class="font-body-lg text-body-lg text-primary-fixed-dim">64%</p>
+<p id="region-north-leading-pct" class="font-body-lg text-body-lg text-primary-fixed-dim">64%</p>
 </div>
 <div>
 <p class="text-[10px] text-on-surface-variant mb-1 uppercase">Margin</p>
-<p class="font-body-lg text-body-lg text-on-surface">+8.2k</p>
+<p id="region-north-margin" class="font-body-lg text-body-lg text-on-surface">+8.2k</p>
 </div>
 </div>
 <div class="relative h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
-<div class="absolute h-full left-0 bg-primary-fixed-dim" style="width: 64%"></div>
-<div class="absolute h-full right-0 bg-secondary-fixed" style="width: 36%"></div>
+<div id="region-north-np-bar" class="absolute h-full left-0 bg-primary-fixed-dim" style="width: 64%"></div>
+<div id="region-north-opp-bar" class="absolute h-full right-0 bg-secondary-fixed" style="width: 36%"></div>
 </div>
 </div>
 <!-- West Region -->
@@ -309,16 +319,16 @@
 <div class="grid grid-cols-2 gap-4 mb-4">
 <div>
 <p class="text-[10px] text-on-surface-variant mb-1 uppercase">Leading</p>
-<p class="font-body-lg text-body-lg text-secondary-fixed">78%</p>
+<p id="region-west-leading-pct" class="font-body-lg text-body-lg text-secondary-fixed">78%</p>
 </div>
 <div>
 <p class="text-[10px] text-on-surface-variant mb-1 uppercase">Margin</p>
-<p class="font-body-lg text-body-lg text-on-surface">+22k</p>
+<p id="region-west-margin" class="font-body-lg text-body-lg text-on-surface">+22k</p>
 </div>
 </div>
 <div class="relative h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
-<div class="absolute h-full left-0 bg-secondary-fixed" style="width: 78%"></div>
-<div class="absolute h-full right-0 bg-primary-fixed-dim" style="width: 22%"></div>
+<div id="region-west-np-bar" class="absolute h-full left-0 bg-secondary-fixed" style="width: 78%"></div>
+<div id="region-west-opp-bar" class="absolute h-full right-0 bg-primary-fixed-dim" style="width: 22%"></div>
 </div>
 </div>
 <!-- South Region -->
@@ -330,16 +340,16 @@
 <div class="grid grid-cols-2 gap-4 mb-4">
 <div>
 <p class="text-[10px] text-on-surface-variant mb-1 uppercase">Leading</p>
-<p class="font-body-lg text-body-lg text-on-surface">49%</p>
+<p id="region-south-leading-pct" class="font-body-lg text-body-lg text-on-surface">49%</p>
 </div>
 <div>
 <p class="text-[10px] text-on-surface-variant mb-1 uppercase">Margin</p>
-<p class="font-body-lg text-body-lg text-on-surface">+1.2k</p>
+<p id="region-south-margin" class="font-body-lg text-body-lg text-on-surface">+1.2k</p>
 </div>
 </div>
 <div class="relative h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
-<div class="absolute h-full left-0 bg-primary-fixed-dim" style="width: 49%"></div>
-<div class="absolute h-full right-0 bg-secondary-fixed" style="width: 51%"></div>
+<div id="region-south-np-bar" class="absolute h-full left-0 bg-primary-fixed-dim" style="width: 49%"></div>
+<div id="region-south-opp-bar" class="absolute h-full right-0 bg-secondary-fixed" style="width: 51%"></div>
 </div>
 </div>
 </div>

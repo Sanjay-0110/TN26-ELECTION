@@ -123,6 +123,16 @@
           }
         }
     </script>
+    <!-- External chart library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Dashboard scripts (order matters) -->
+    <script src="js/data-loader.js"></script>
+    <script src="js/stats-calculator.js"></script>
+    <script src="js/chart-builder.js"></script>
+    <script src="js/table-manager.js"></script>
+    <script src="js/filter-handler.js"></script>
+    <script src="js/ui-controller.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-md overflow-x-hidden">
 <!-- Sidebar Navigation Drawer -->
@@ -209,7 +219,7 @@
 <div class="flex-1 flex flex-col items-center gap-4">
 <div class="w-full flex items-end justify-center gap-1 h-full">
 <div class="w-1/2 bg-outline/20 h-[45%] rounded-t-sm"></div>
-<div class="w-1/2 bg-primary-container h-[72%] rounded-t-sm glow-cyan relative group">
+<div class="w-1/2 bg-primary-container h-[72%] rounded-t-sm glow-cyan relative group" data-bar-height="72%">
 <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface-bright p-1 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">+27% YoY</div>
 </div>
 </div>
@@ -219,7 +229,7 @@
 <div class="flex-1 flex flex-col items-center gap-4">
 <div class="w-full flex items-end justify-center gap-1 h-full">
 <div class="w-1/2 bg-outline/20 h-[62%] rounded-t-sm"></div>
-<div class="w-1/2 bg-primary-container h-[78%] rounded-t-sm glow-cyan"></div>
+<div class="w-1/2 bg-primary-container h-[78%] rounded-t-sm glow-cyan" data-bar-height="78%"></div>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant">25-34</span>
 </div>
@@ -227,7 +237,7 @@
 <div class="flex-1 flex flex-col items-center gap-4">
 <div class="w-full flex items-end justify-center gap-1 h-full">
 <div class="w-1/2 bg-outline/20 h-[85%] rounded-t-sm"></div>
-<div class="w-1/2 bg-primary-container h-[82%] rounded-t-sm"></div>
+<div class="w-1/2 bg-primary-container h-[82%] rounded-t-sm" data-bar-height="82%"></div>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant">35-54</span>
 </div>
@@ -235,7 +245,7 @@
 <div class="flex-1 flex flex-col items-center gap-4">
 <div class="w-full flex items-end justify-center gap-1 h-full">
 <div class="w-1/2 bg-outline/20 h-[75%] rounded-t-sm"></div>
-<div class="w-1/2 bg-primary-container h-[68%] rounded-t-sm"></div>
+<div class="w-1/2 bg-primary-container h-[68%] rounded-t-sm" data-bar-height="68%"></div>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant">55-64</span>
 </div>
@@ -243,10 +253,13 @@
 <div class="flex-1 flex flex-col items-center gap-4">
 <div class="w-full flex items-end justify-center gap-1 h-full">
 <div class="w-1/2 bg-outline/20 h-[92%] rounded-t-sm"></div>
-<div class="w-1/2 bg-primary-container h-[88%] rounded-t-sm"></div>
+<div class="w-1/2 bg-primary-container h-[88%] rounded-t-sm" data-bar-height="88%"></div>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant">65+</span>
 </div>
+</div>
+<div class="mt-8" style="height:240px; position:relative;">
+  <canvas id="demoPartyVoteChart"></canvas>
 </div>
 </section>
 <!-- Education Level Analysis -->
@@ -345,7 +358,7 @@
 <th class="p-4 font-label-sm text-label-sm text-secondary-fixed uppercase tracking-wider">Status</th>
 </tr>
 </thead>
-<tbody class="text-on-surface-variant font-body-md text-sm">
+<tbody id="demo-vote-tbody" class="text-on-surface-variant font-body-md text-sm">
 <tr>
 <td class="p-4 font-label-md text-on-surface">PR-0422</td>
 <td class="p-4">Urban Core</td>
