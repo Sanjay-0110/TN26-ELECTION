@@ -216,43 +216,36 @@ html, body, [data-testid="stAppViewContainer"] {
 
 # ─── DATA ───────────────────────────────────────────────────────────────────────
 
+result26 = pd.read_csv("clean_data/tn26_results.csv")
+result21 = pd.read_csv("clean_data/tn21_results.csv")
 # Seat tally 2026
-party_seats = pd.DataFrame({
-    "Party": ["TVK", "DMK", "AIADMK", "INC", "PMK", "CPI", "CPI(M)", "IUML", "VCK", "AMMK", "BJP", "DMDK"],
-    "Seats_2026": [108, 59, 47, 5, 4, 2, 2, 2, 2, 1, 1, 1],
-    "Seats_2021": [0, 133, 66, 18, 5, 2, 2, 1, 4, 0, 4, 0],
-})
+party_seats_26 = result26['Lead_Party_Name'].value_counts().reset_index()
+party_seats_26.columns = ['Party', 'Seats']
+party_seats_21 = result21['Winning Party'].value_counts().reset_index()
+party_seats_21.columns = ['Party', 'Seats']
+
+party_seats = (
+    pd.merge(
+        party_seats_21,
+        party_seats_26,
+        on="Party",
+        how="outer",
+        suffixes=("_2021", "_2026")
+    )
+    .fillna(0)
+    .astype({"Seats_2021": int, "Seats_2026": int})
+)
 party_seats["Change"] = party_seats["Seats_2026"] - party_seats["Seats_2021"]
 
 # Vote share 2026
-vote_share = pd.DataFrame({
-    "Party": ["TVK", "DMK", "ADMK", "NTK", "INC", "BJP", "DMDK", "VCK", "CPI", "CPI(M)", "NOTA", "IUML", "Other"],
-    "Percentage": [34.92, 24.19, 21.21, 4.00, 3.37, 2.97, 1.20, 1.09, 0.66, 0.60, 0.41, 0.29, 4.97],
-    "Votes": [17226209, 11929144, 10462146, 1972537, 1661312, 1467024, 589500, 540056, 326488, 293817, 199801, 142465, 2451413],
-})
+vote_share = pd.read_csv('C:/Code Note/TN26-ELECTION/clean_data/tn26_party_vote_share.csv')
 
 # District-level summary (top districts)
-district_data = pd.DataFrame({
-    "District": ["Chennai", "Coimbatore", "Madurai", "Salem", "Tiruchirappalli", "Vellore",
-                 "Erode", "Tiruppur", "Virudhunagar", "Thanjavur", "Dharmapuri", "Kanniyakumari"],
-    "TVK": [17, 6, 5, 7, 4, 3, 5, 6, 4, 3, 1, 3],
-    "DMK": [2, 3, 2, 1, 4, 1, 2, 1, 2, 3, 0, 0],
-    "AIADMK": [0, 1, 1, 1, 1, 1, 2, 1, 1, 2, 4, 2],
-    "Others": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-})
+district_data = result26.groupby('District')['Lead_Party_Name'].value_counts().unstack(fill_value=0).reset_index()
 
 # Constituency-level data (sample of notable ones)
-constituency_data = pd.DataFrame({
-    "Constituency": ["Ambattur", "Alandur", "Anna Nagar", "Velachery", "Virugampakkam",
-                     "Coimbatore South", "Tiruppattur (185)", "Ambur", "Hosur",
-                     "Harbour", "Palani", "Kulithalai"],
-    "Winner": ["TVK", "TVK", "TVK", "TVK", "TVK", "DMK", "TVK", "DMK", "AIADMK", "DMK", "AIADMK", "DMK"],
-    "Runner": ["DMK", "DMK", "DMK", "AIADMK", "DMK", "TVK", "DMK", "TVK", "TVK", "TVK", "TVK", "TVK"],
-    "Margin": [58781, 29609, 21363, 33305, 27086, 2271, 1, 12977, 27803, None, 693, 579],
-    "District": ["Thiruvallur", "Kancheepuram", "Chennai", "Chennai", "Chennai",
-                 "Coimbatore", "Tirupattur", "Tirupattur", "Krishnagiri",
-                 "Chennai", "Dindigul", "Perambalur"],
-})
+constituency_data = result26[['Constituency', 'Lead_Party_Name', 'Trail_Party_Name', 'Margin', 'District']]
+constituency_data.columns = ['Constituency', 'Winner', 'Runner', 'Margin', 'District']
 
 # ─── PARTY COLORS ───────────────────────────────────────────────────────────────
 PARTY_COLORS = {
@@ -394,7 +387,7 @@ if page == "Overview":
         top_vs = vote_share.head(8)
         fig2 = go.Figure(go.Pie(
             labels=top_vs["Party"],
-            values=top_vs["Percentage"],
+            values=top_vs["percentage"],
             hole=0.55,
             marker=dict(colors=[party_color(p) for p in top_vs["Party"]], line=dict(color="#131313", width=2)),
             textinfo="label+percent",
@@ -426,21 +419,21 @@ if page == "Overview":
                 <td><span class="dot-cyan"></span>TVK Alliance</td>
                 <td><span style="color:#00daf3; font-family:'JetBrains Mono',monospace;">TVK</span></td>
                 <td><b>108</b></td>
-                <td>34.92%</td>
+                <td>36.1%</td>
                 <td><span style="color:#00daf3; font-family:'JetBrains Mono',monospace; font-size:11px;">▲ LARGEST PARTY</span></td>
             </tr>
             <tr>
                 <td><span class="dot-gold"></span>DMK Alliance</td>
                 <td><span style="color:#e9c400; font-family:'JetBrains Mono',monospace;">DMK + INC + CPI + CPI(M) + VCK + IUML</span></td>
                 <td><b>72</b></td>
-                <td>~30%</td>
+                <td>~30.19%</td>
                 <td><span style="color:#e9c400; font-family:'JetBrains Mono',monospace; font-size:11px;">▼ INCUMBENT DEFEAT</span></td>
             </tr>
             <tr>
                 <td><span class="dot-grey"></span>AIADMK Bloc</td>
                 <td><span style="color:#ff6b6b; font-family:'JetBrains Mono',monospace;">AIADMK + PMK + AMMK + DMDK + BJP</span></td>
                 <td><b>54</b></td>
-                <td>~27%</td>
+                <td>~24%</td>
                 <td><span style="color:#849396; font-family:'JetBrains Mono',monospace; font-size:11px;">→ OPPOSITION</span></td>
             </tr>
         </tbody>
@@ -536,7 +529,7 @@ elif page == "Vote Share":
         st.markdown('<div class="section-title">Vote Share Distribution</div>', unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
             labels=vote_share["Party"],
-            values=vote_share["Percentage"],
+            values=vote_share["percentage"],
             hole=0.5,
             marker=dict(colors=[party_color(p) for p in vote_share["Party"]], line=dict(color="#131313", width=2)),
             textinfo="label",
@@ -550,12 +543,12 @@ elif page == "Vote Share":
     with col2:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Vote Share by Party</div>', unsafe_allow_html=True)
-        df_vs = vote_share.sort_values("Percentage", ascending=True)
+        df_vs = vote_share.sort_values("percentage", ascending=True)
         fig2 = go.Figure(go.Bar(
-            y=df_vs["Party"], x=df_vs["Percentage"],
+            y=df_vs["Party"], x=df_vs["percentage"],
             orientation="h",
             marker=dict(color=[party_color(p) for p in df_vs["Party"]]),
-            text=[f"{v:.2f}%" for v in df_vs["Percentage"]],
+            text=[f"{v:.2f}%" for v in df_vs["percentage"]],
             textposition="outside",
             textfont=dict(family="JetBrains Mono", size=10, color="#e5e2e1"),
             hovertemplate="<b>%{y}</b><br>%{x:.2f}%<extra></extra>",
@@ -572,15 +565,15 @@ elif page == "Vote Share":
     rows = ""
     for _, r in vote_share.iterrows():
         dot = party_color(r["Party"])
-        bar_w = int(r["Percentage"] / 35 * 150)
+        bar_w = int(r["percentage"] / 35 * 150)
         rows += f"""
         <tr>
             <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{dot};margin-right:8px;"></span>{r['Party']}</td>
             <td><div style="display:flex;align-items:center;gap:8px;">
                 <div style="width:{bar_w}px;height:4px;background:{dot};border-radius:2px;"></div>
-                <span style="font-family:'JetBrains Mono',monospace;color:#c3f5ff;">{r['Percentage']:.2f}%</span>
+                <span style="font-family:'JetBrains Mono',monospace;color:#c3f5ff;">{r['percentage']:.2f}%</span>
             </div></td>
-            <td style="font-family:'JetBrains Mono',monospace;color:#bac9cc;">{r['Votes']:,}</td>
+            <td style="font-family:'JetBrains Mono',monospace;color:#bac9cc;">{r['Vote Share']:,}</td>
         </tr>"""
     st.markdown(f"""
     <table class="styled-table">
@@ -603,25 +596,45 @@ elif page == "District Breakdown":
     st.markdown('<div class="section-title">Seats by District & Party (Top Districts)</div>', unsafe_allow_html=True)
 
     df_melt = district_data.melt(id_vars="District", var_name="Party", value_name="Seats")
+
     fig = go.Figure()
-    for party in ["TVK", "DMK", "AIADMK", "Others"]:
+
+    parties = ["TVK", "DMK", "AIADMK", "Others"]
+
+    # Filter parties based on selection
+    if selected_party == "All":
+        visible_parties = parties
+    else:
+        visible_parties = [selected_party]
+
+    for party in parties:
         d = df_melt[df_melt["Party"] == party]
         fig.add_trace(go.Bar(
-            name=party, x=d["District"], y=d["Seats"],
+            name=party,
+            x=d["District"],
+            y=d["Seats"],
             marker_color=party_color(party),
+            visible=(party in visible_parties),  # show/hide based on filter
             hovertemplate=f"<b>{party}</b><br>%{{x}}: %{{y}} seats<extra></extra>",
         ))
+
     fig.update_layout(**PLOTLY_LAYOUT, height=360, barmode="stack",
-                      xaxis=dict(showgrid=False, color="#849396"),
-                      yaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396", title="Seats"))
+                    xaxis=dict(showgrid=False, color="#849396"),
+                    yaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396", title="Seats"))
+
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Heatmap
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">District Dominance Map</div>', unsafe_allow_html=True)
+    
+    if selected_party == "All":
+        cols = ["TVK", "DMK", "AIADMK"]
+    else:
+        cols = [selected_party]
+    heat_df = district_data.set_index("District")[cols]
 
-    heat_df = district_data.set_index("District")[["TVK", "DMK", "AIADMK"]]
     fig2 = go.Figure(go.Heatmap(
         z=heat_df.values,
         x=heat_df.columns.tolist(),
@@ -629,16 +642,32 @@ elif page == "District Breakdown":
         colorscale=[[0, "#1b1b1c"], [0.5, "#004f58"], [1, "#00daf3"]],
         text=heat_df.values,
         texttemplate="%{text}",
-        textfont=dict(family="JetBrains Mono", size=12),
+        textfont=dict(family="JetBrains Mono", size=10),
         hovertemplate="<b>%{y} — %{x}</b><br>%{z} seats<extra></extra>",
         showscale=False,
+        xgap=3,   # spacing between columns
+        ygap=3,   # spacing between rows
     ))
-    fig2.update_layout(**PLOTLY_LAYOUT, height=360,
-                       xaxis=dict(color="#bac9cc"),
-                       yaxis=dict(color="#bac9cc"))
+
+    layout = {**PLOTLY_LAYOUT, "margin": dict(l=130, r=20, t=10, b=40)}
+
+    fig2.update_layout(
+        **layout,
+        height=600,
+        xaxis=dict(
+            color="#bac9cc",
+            side="bottom",
+            tickfont=dict(family="JetBrains Mono", size=12),
+        ),
+        yaxis=dict(
+            color="#bac9cc",
+            tickfont=dict(family="JetBrains Mono", size=11),
+            autorange="reversed",
+        ),
+    )
+
     st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
     st.markdown('</div>', unsafe_allow_html=True)
-
 # ─── CONSTITUENCY EXPLORER PAGE ──────────────────────────────────────────────────
 elif page == "Constituency Explorer":
     st.markdown("""
@@ -654,7 +683,15 @@ elif page == "Constituency Explorer":
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Notable Constituencies — Victory Margins</div>', unsafe_allow_html=True)
 
-        df_c = constituency_data.dropna(subset=["Margin"]).sort_values("Margin", ascending=True)
+        df_c = constituency_data.dropna(subset=["Margin"])
+
+        # Filter by selected party
+        if selected_party != "All":
+            df_c = df_c[df_c["Winner"] == selected_party]
+
+        # Top 10 big-margin winners
+        df_c = df_c.sort_values("Margin", ascending=False).head(10).sort_values("Margin", ascending=True)
+
         colors_w = [party_color(p) for p in df_c["Winner"]]
 
         fig = go.Figure(go.Bar(
@@ -667,9 +704,11 @@ elif page == "Constituency Explorer":
             textfont=dict(family="JetBrains Mono", size=10, color="#e5e2e1"),
             hovertemplate="<b>%{y}</b><br>Margin: %{x:,}<extra></extra>",
         ))
+
         fig.update_layout(**PLOTLY_LAYOUT, height=340, showlegend=False,
-                          xaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396"),
-                          yaxis=dict(showgrid=False, color="#e5e2e1"))
+                        xaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396"),
+                        yaxis=dict(showgrid=False, color="#e5e2e1"))
+
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -701,8 +740,14 @@ elif page == "Constituency Explorer":
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">All Constituencies (Sample)</div>', unsafe_allow_html=True)
 
+    # Filter by selected party
+    if selected_party == "All":
+        filtered = constituency_data
+    else:
+        filtered = constituency_data[constituency_data["Winner"] == selected_party]
+
     rows = ""
-    for _, r in constituency_data.sort_values("Margin", ascending=False, na_position='last').iterrows():
+    for _, r in filtered.sort_values("Margin", ascending=False, na_position='last').iterrows():
         wc = party_color(r["Winner"])
         rc = party_color(r["Runner"])
         margin_str = f"{int(r['Margin']):,}" if pd.notna(r["Margin"]) else "—"
@@ -714,6 +759,11 @@ elif page == "Constituency Explorer":
             <td><span style="color:{rc};font-family:'JetBrains Mono',monospace;font-size:11px;">{r['Runner']}</span></td>
             <td style="font-family:'JetBrains Mono',monospace;color:#c3f5ff;">{margin_str}</td>
         </tr>"""
+
+    # Show empty state if no results
+    if not rows:
+        rows = f'<tr><td colspan="5" style="text-align:center;color:#849396;padding:20px;">No constituencies found for {selected_party}</td></tr>'
+
     st.markdown(f"""
     <table class="styled-table">
         <thead><tr><th>Constituency</th><th>District</th><th>Winner</th><th>Runner-up</th><th>Margin</th></tr></thead>
