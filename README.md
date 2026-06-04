@@ -69,6 +69,21 @@ python "Scraping_data\tn26_data_scrape.py"
 
 3. Open `NoteBook/eda.ipynb` to explore the cleaned datasets and perform analysis.
 
+## Live Dashboard Outlook
+
+A Streamlit version of the TN26 analytics dashboard is available at:
+
+https://tn26-election-analysis.streamlit.app/
+
+The live dashboard presents:
+- an executive overview of total turnout, declared seats, and swing metrics
+- interactive vote share and seat distribution visualizations
+- swing analysis comparing 2026 results with 2021 baselines
+- demographic and regional performance summaries
+- coalition and alliance impact metrics
+
+This README should be updated with the live app link and the current dashboard outlook whenever the Streamlit deployment changes.
+
 ## Notes and Limitations
 
 - The `script/` folder is currently empty and can be used for future analysis scripts.
