@@ -606,7 +606,7 @@ elif page == "District Breakdown":
 
     fig = go.Figure()
 
-    parties = ["TVK", "DMK", "AIADMK", "Others"]
+    parties = ["TVK", "DMK", "ADMK", "Others"]
 
     # Filter parties based on selection
     if selected_party == "All":
@@ -788,3 +788,5 @@ elif page == "Constituency Explorer":
     </table>
     """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
+# ─── Party wise analysis PAGE ──────────────────────────────────────────────────
