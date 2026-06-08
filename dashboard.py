@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+from map import render_district_map
 
 # ─── PAGE CONFIG ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -218,6 +219,11 @@ html, body, [data-testid="stAppViewContainer"] {
 
 result26 = pd.read_csv("clean_data/tn26_results.csv")
 result21 = pd.read_csv("clean_data/tn21_results.csv")
+
+result26['Lead_Party_Name'] = result26['Lead_Party_Name'].replace('AIADMK', 'ADMK')
+result26.loc[56, 'District'] = 'Ariyalur' 
+result26.loc[156, 'District'] = 'Ariyalur'
+
 # Seat tally 2026
 party_seats_26 = result26['Lead_Party_Name'].value_counts().reset_index()
 party_seats_26.columns = ['Party', 'Seats']
@@ -247,11 +253,12 @@ district_data = result26.groupby('District')['Lead_Party_Name'].value_counts().u
 constituency_data = result26[['Constituency', 'Lead_Party_Name', 'Trail_Party_Name', 'Margin', 'District']]
 constituency_data.columns = ['Constituency', 'Winner', 'Runner', 'Margin', 'District']
 
+
 # ─── PARTY COLORS ───────────────────────────────────────────────────────────────
 PARTY_COLORS = {
     "TVK": "#00daf3",
     "DMK": "#e9c400",
-    "AIADMK": "#ff6b6b",
+    "ADMK": "#ff6b6b",
     "INC": "#69c0ff",
     "PMK": "#95de64",
     "BJP": "#ff8c00",
@@ -295,7 +302,7 @@ with st.sidebar:
     )
 
     st.markdown('<div class="sidebar-section">Filter</div>', unsafe_allow_html=True)
-    selected_party = st.selectbox("Focus Party", ["All", "TVK", "DMK", "AIADMK", "INC", "PMK", "BJP", "Others"])
+    selected_party = st.selectbox("Focus Party", ["All", "TVK", "DMK", "ADMK", "INC", "PMK", "BJP", "Others"])
 
     st.markdown("""
     <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid #3b494c;">
@@ -667,6 +674,16 @@ elif page == "District Breakdown":
     )
 
     st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # District choropleth map (Leaflet) from map.py
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">District Choropleth Map</div>', unsafe_allow_html=True)
+    try:
+        sel = None if selected_party == "All" else selected_party
+        render_district_map(result26, selected_party=sel, height=620)
+    except Exception as e:
+        st.error(f"Failed to render district map: {e}")
     st.markdown('</div>', unsafe_allow_html=True)
 # ─── CONSTITUENCY EXPLORER PAGE ──────────────────────────────────────────────────
 elif page == "Constituency Explorer":
