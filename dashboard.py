@@ -28,7 +28,18 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="stSidebar"] {
     background-color: #0e0e0e !important;
     border-right: 1px solid #3b494c;
-    width: 240px !important;
+    min-width: 220px !important;
+    max-width: 280px !important;
+}
+
+[data-testid="stSidebarNav"] {
+    display: none !important;  /* hides default page nav if using multipage */
+}
+
+/* Ensure sidebar collapse button is visible */
+[data-testid="collapsedControl"] {
+    color: #c3f5ff !important;
+    background-color: #0e0e0e !important;
 }
 [data-testid="stSidebar"] .stSelectbox label,
 [data-testid="stSidebar"] .stRadio label,
