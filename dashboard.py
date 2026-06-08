@@ -437,8 +437,8 @@ if page == "Overview":
                 <td><span style="color:#e9c400; font-family:'JetBrains Mono',monospace; font-size:11px;">▼ INCUMBENT DEFEAT</span></td>
             </tr>
             <tr>
-                <td><span class="dot-grey"></span>AIADMK Bloc</td>
-                <td><span style="color:#ff6b6b; font-family:'JetBrains Mono',monospace;">AIADMK + PMK + AMMK + DMDK + BJP</span></td>
+                <td><span class="dot-grey"></span>ADMK Bloc</td>
+                <td><span style="color:#ff6b6b; font-family:'JetBrains Mono',monospace;">ADMK + PMK + AMMK + DMDK + BJP</span></td>
                 <td><b>54</b></td>
                 <td>~24%</td>
                 <td><span style="color:#849396; font-family:'JetBrains Mono',monospace; font-size:11px;">→ OPPOSITION</span></td>
@@ -637,7 +637,7 @@ elif page == "District Breakdown":
     st.markdown('<div class="section-title">District Dominance Map</div>', unsafe_allow_html=True)
     
     if selected_party == "All":
-        cols = ["TVK", "DMK", "AIADMK"]
+        cols = ["TVK", "DMK", "ADMK"]
     else:
         cols = [selected_party]
     heat_df = district_data.set_index("District")[cols]
