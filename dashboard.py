@@ -50,6 +50,41 @@ html, body, [data-testid="stAppViewContainer"] {
     font-size: 13px;
 }
 
+/* Sidebar collapse/expand toggle button */
+[data-testid="collapsedControl"] {
+    display: block !important;
+    visibility: visible !important;
+    color: #c3f5ff !important;
+    background-color: #1b1b1c !important;
+    border: 1px solid #3b494c !important;
+    border-radius: 4px !important;
+}
+
+/* The arrow icon inside it */
+[data-testid="collapsedControl"] svg {
+    fill: #c3f5ff !important;
+    color: #c3f5ff !important;
+}
+
+/* When sidebar is collapsed, the expand button on the left edge */
+[data-testid="collapsedControl"] button {
+    color: #c3f5ff !important;
+    background-color: #1b1b1c !important;
+}
+
+/* The floating pill/button that appears when sidebar is collapsed */
+section[data-testid="stSidebar"][aria-expanded="false"] ~ div [data-testid="collapsedControl"] {
+    background-color: #1b1b1c !important;
+    border-color: #3b494c !important;
+}
+
+/* Nuclear option — force ALL buttons with SVG arrows visible */
+button[kind="header"] {
+    color: #c3f5ff !important;
+    background: #1b1b1c !important;
+    border: 1px solid #3b494c !important;
+}
+            
 /* Sidebar title */
 .sidebar-brand {
     font-family: 'Montserrat', sans-serif;
