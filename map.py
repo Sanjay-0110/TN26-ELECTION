@@ -120,7 +120,7 @@ def render_district_map(
     total_by_dist = winners.groupby("district").size().reset_index(name="total")
 
     # ── Load & colour GeoJSON ─────────────────────────────────────────────────
-    geojson_path = "TN26-ELECTION/tn_simplified.geojson"
+    geojson_path = "clean_data//tn_simplified.geojson"
     with open(geojson_path) as f:
         geo = json.load(f)
 
