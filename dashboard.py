@@ -267,6 +267,7 @@ result26 = pd.read_csv("clean_data/tn26_results.csv")
 result21 = pd.read_csv("clean_data/tn21_results.csv")
 
 result26['Lead_Party_Name'] = result26['Lead_Party_Name'].replace('AIADMK', 'ADMK')
+result26['Trail_Party_Name'] = result26['Trail_Party_Name'].replace('AIADMK', 'ADMK')
 result26.loc[56, 'District'] = 'Ariyalur' 
 result26.loc[156, 'District'] = 'Ariyalur'
 
@@ -342,8 +343,8 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section">Navigation</div>', unsafe_allow_html=True)
     page = st.radio(
-        "",
-        ["Overview", "Seat Analysis", "Vote Share", "District Breakdown", "Constituency Explorer"],
+        "Navigation",
+        ["Overview", "Seat Analysis", "Vote Share", "District Breakdown", "Constituency Explorer", "Party Analysis"],
         label_visibility="collapsed",
     )
 
@@ -836,3 +837,479 @@ elif page == "Constituency Explorer":
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ─── Party wise analysis PAGE ──────────────────────────────────────────────────
+
+# ─── PARTY WISE ANALYSIS PAGE ────────────────────────────────────────────────
+# Drop-in replacement block for dashboard.py
+# Paste this after the `elif page == "Constituency Explorer":` block
+# Requires: result26, result21, party_seats, vote_share, constituency_data,
+#           district_data, PLOTLY_LAYOUT, party_color(), selected_party
+
+elif page == "Party Analysis":
+
+    # ── Resolve selected party (default to TVK if "All" selected) ─────────────
+    focus = selected_party if selected_party != "All" else "TVK"
+    p_color = party_color(focus)
+
+    # ── Derived data ──────────────────────────────────────────────────────────
+    # Seats won
+    seats_won = int(result26[result26["Lead_Party_Name"] == focus].shape[0])
+
+    # Total votes polled by party
+    total_votes_col = None
+    for col in ["Total Votes", "total_votes", "Votes", "Lead_Votes", "Winner_Votes"]:
+        if col in result26.columns:
+            total_votes_col = col
+            break
+
+    if total_votes_col:
+        party_votes = int(result26[result26["Lead_Party_Name"] == focus][total_votes_col].sum())
+    else:
+        # Fallback: use vote_share CSV
+        vs_row = vote_share[vote_share["Party"] == focus]
+        party_votes = int(vs_row["Vote Share"].values[0]) if not vs_row.empty and "Vote Share" in vs_row.columns else 0
+
+    # Highest seat conversion district
+    dist_group = result26[result26["Lead_Party_Name"] == focus].groupby("District").size()
+    if not dist_group.empty:
+        best_district = dist_group.idxmax()
+        best_district_seats = int(dist_group.max())
+        dist_total = result26[result26["District"] == best_district].shape[0]
+        conversion_pct = round(best_district_seats / dist_total * 100, 1)
+    else:
+        best_district, best_district_seats, dist_total, conversion_pct = "—", 0, 0, 0.0
+
+    # Vote share %
+    vs_row = vote_share[vote_share["Party"] == focus]
+    party_vote_pct = f"{vs_row['percentage'].values[0]:.2f}%" if not vs_row.empty else "—"
+
+    # Seat change 2021→2026
+    ps_row = party_seats[party_seats["Party"] == focus]
+    seats_2021 = int(ps_row["Seats_2021"].values[0]) if not ps_row.empty else 0
+    seat_change = seats_won - seats_2021
+    chg_sign = "+" if seat_change > 0 else ""
+
+    # ── Page header ───────────────────────────────────────────────────────────
+    st.markdown(f"""
+    <div class="page-header">
+        <div class="page-title">Party Analysis</div>
+        <div class="page-subtitle">
+            <span style="font-family:'JetBrains Mono',monospace; color:{p_color}; font-size:13px;">
+                ● {focus}
+            </span>
+            &nbsp;·&nbsp; IN-DEPTH PERFORMANCE BREAKDOWN · TN 2026
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── KPI Row ─────────────────────────────────────────────
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.markdown(f"""
+        <div class="kpi-card" style="border-top:2px solid {p_color};">
+            <div class="kpi-label">Seats Won</div>
+            <div class="kpi-value" style="color:{p_color};">{seats_won}</div>
+            <div class="kpi-sub" style="font-family:'JetBrains Mono',monospace;">
+                of 234 &nbsp;·&nbsp;
+                <span style="color:{'#00daf3' if seat_change >= 0 else '#ff6b6b'};">
+                    {chg_sign}{seat_change} vs 2021
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"""
+        <div class="kpi-card gold" style="border-top:2px solid #e9c400;">
+            <div class="kpi-label">Votes Polled</div>
+            <div class="kpi-value gold">
+                {f"{party_votes/1e7:.2f}Cr" if party_votes >= 1e7 else f"{party_votes/1e5:.1f}L" if party_votes >= 1e5 else f"{party_votes:,}"}
+            </div>
+            <div class="kpi-sub">
+                <span class="dot-gold"></span>{party_vote_pct} of total vote share
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+        <div class="kpi-card" style="border-top:2px solid #849396;">
+            <div class="kpi-label">Highest Seat Conversion District</div>
+            <div class="kpi-value" style="font-size:22px; color:#e5e2e1; margin-top:4px;">
+                {best_district}
+            </div>
+            <div class="kpi-sub">
+                {best_district_seats} of {dist_total} seats
+                &nbsp;·&nbsp; {conversion_pct}% strike rate
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(f"""
+        <div class="kpi-card" style="border-top:2px solid {p_color};">
+            <div class="kpi-label">Party</div>
+            <div class="kpi-value" style="font-size:30px; color:{p_color}; letter-spacing:-0.01em;">
+                {focus}
+            </div>
+            <div class="kpi-sub">
+                <span style="color:{p_color};">●</span>
+                {'Tamil Nadu 2026 · Largest Party'
+                if seats_won == result26['Lead_Party_Name'].value_counts().iloc[0]
+                else 'Tamil Nadu 2026 · Assembly Election'}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Row 1: District seat distribution + Win margin distribution ───────────
+    col1, col2 = st.columns([3, 2], gap="medium")
+
+    with col1:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Seats Won by District</div>', unsafe_allow_html=True)
+
+        party_by_dist = (
+            result26[result26["Lead_Party_Name"] == focus]
+            .groupby("District")
+            .size()
+            .reset_index(name="Seats")
+            .sort_values("Seats", ascending=True)
+        )
+
+        import re
+        def hex_to_rgba(hex_color, alpha=1.0):
+            hex_color = hex_color.lstrip("#")
+            r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+            return f"rgba({r},{g},{b},{alpha})"
+
+        fig_dist = go.Figure(go.Bar(
+            y=party_by_dist["District"],
+            x=party_by_dist["Seats"],
+            orientation="h",
+            marker=dict(
+                color=party_by_dist["Seats"],
+                colorscale=[[0, "#1b1b1c"], [0.4, hex_to_rgba(p_color, 0.5)], [1, p_color]],
+                showscale=False,
+            ),
+            text=party_by_dist["Seats"],
+            textposition="outside",
+            textfont=dict(family="JetBrains Mono", size=10, color="#e5e2e1"),
+            hovertemplate="<b>%{y}</b><br>%{x} seats<extra></extra>",
+        ))
+        fig_dist.update_layout(
+            **PLOTLY_LAYOUT,
+            height=max(300, len(party_by_dist) * 28),
+            showlegend=False,
+            xaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396"),
+            yaxis=dict(showgrid=False, color="#e5e2e1"),
+        )
+        st.plotly_chart(fig_dist, use_container_width=True, config={"displayModeBar": False})
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Victory Margin Distribution</div>', unsafe_allow_html=True)
+
+        margins = constituency_data[
+            constituency_data["Winner"] == focus
+        ]["Margin"].dropna()
+
+        if not margins.empty:
+            fig_margin = go.Figure(go.Histogram(
+                x=margins,
+                nbinsx=20,
+                marker=dict(
+                    color=p_color,
+                    opacity=0.8,
+                    line=dict(color="#131313", width=1),
+                ),
+                hovertemplate="Margin %{x:,.0f}–%{x:,.0f}<br>%{y} seats<extra></extra>",
+            ))
+            fig_margin.update_layout(
+                **PLOTLY_LAYOUT,
+                height=300,
+                showlegend=False,
+                xaxis=dict(showgrid=False, color="#849396", title="Margin (votes)"),
+                yaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396", title="Constituencies"),
+            )
+            # Median line
+            fig_margin.add_vline(
+                x=margins.median(),
+                line=dict(color="#ffdb3c", width=1, dash="dot"),
+                annotation_text=f"  median {int(margins.median()):,}",
+                annotation_font=dict(family="JetBrains Mono", size=10, color="#ffdb3c"),
+            )
+            st.plotly_chart(fig_margin, use_container_width=True, config={"displayModeBar": False})
+
+            # Quick stats
+            stats_html = f"""
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.5rem;">
+                <div style="background:#202020; border-radius:6px; padding:0.6rem 0.8rem;">
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#849396; text-transform:uppercase; letter-spacing:.06em;">Avg margin</div>
+                    <div style="font-size:16px; font-weight:700; color:{p_color}; font-family:'JetBrains Mono',monospace;">{int(margins.mean()):,}</div>
+                </div>
+                <div style="background:#202020; border-radius:6px; padding:0.6rem 0.8rem;">
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#849396; text-transform:uppercase; letter-spacing:.06em;">Max margin</div>
+                    <div style="font-size:16px; font-weight:700; color:#e9c400; font-family:'JetBrains Mono',monospace;">{int(margins.max()):,}</div>
+                </div>
+                <div style="background:#202020; border-radius:6px; padding:0.6rem 0.8rem;">
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#849396; text-transform:uppercase; letter-spacing:.06em;">Min margin</div>
+                    <div style="font-size:16px; font-weight:700; color:#ff6b6b; font-family:'JetBrains Mono',monospace;">{int(margins.min()):,}</div>
+                </div>
+                <div style="background:#202020; border-radius:6px; padding:0.6rem 0.8rem;">
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#849396; text-transform:uppercase; letter-spacing:.06em;">Seats &lt;5k margin</div>
+                    <div style="font-size:16px; font-weight:700; color:#ff6b6b; font-family:'JetBrains Mono',monospace;">{int((margins < 5000).sum())}</div>
+                </div>
+            </div>
+            """
+            PARTY_NOTES = {
+            "TVK": (
+                f"Dominated by TVK's sweeping victory in 2026, the party showcased a mix of landslide wins and tight contests. "
+                f"{best_district} was landslide territory for TVK where it secured {best_district_seats} seats out of 19 in the district.  "
+                f"The average victory margin of around {int(margins.mean()):,} votes reflects a blend of strongholds and competitive battlegrounds. "  
+                f"Vijay pre poll campaigned region performed exceptionally well, that made TVK to secure winning seats in that detricts"
+            ), 
+            "DMK": (
+                f"The DMK faced a challenging election cycle in 2026, experiencing losses across several regions. "
+                f"While retaining some traditional strongholds, it lost ground in key urban constituencies where voter sentiment shifted. "
+                f"The average margin was around {int(margins.mean()):,} votes. "
+                f"16 Ex-DMK Ministers including former Chief Minister MK Stalin lost their seats — a clear signal of anti-incumbency "
+                f"driven by concerns over law and order, the drug menace, misuse of power, and corruption."
+            ),
+            "ADMK": (
+                f"The ADMK's 2026 performance was mixed — securing wins in traditional bastions while facing stiff competition elsewhere. "
+                f"With TVK's emergence, the 55-year-old party was pushed to third place in both vote share and seat count. "
+                f"The average victory margin was around {int(margins.mean()):,} votes. "
+                f"The BJP alliance also failed to deliver meaningful gains in seats or vote share."
+            ),
+        }
+
+            note = PARTY_NOTES.get(focus, "No analysis available for this party.")
+
+            st.markdown(stats_html + f"""
+            <div style="margin-top:0.75rem;background:#202020;border-radius:6px;border-left:4px solid {p_color};padding:0.8rem;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849396;text-transform:uppercase;letter-spacing:.08em;margin-bottom:0.4rem;">
+                    Party Insight
+                </div>
+                <div style="color:#e5e2e1;font-size:13px;line-height:1.6;">
+                    {note}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="color:#849396; font-family:JetBrains Mono, monospace; font-size:13px; padding:2rem 0; text-align:center;">No margin data available</div>', unsafe_allow_html=True)
+
+
+    # ── Row 2: Head-to-head rivalries + Closest contests ─────────────────────
+    col3, col4 = st.columns([2, 3], gap="medium")
+
+    with col3:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Main Rivals Faced</div>', unsafe_allow_html=True)
+
+        # Where this party won, who was runner up?
+        rivals_won = constituency_data[constituency_data["Winner"] == focus]["Runner"].value_counts().head(8)
+        # Where this party was runner up, who beat them?
+        rivals_lost = constituency_data[constituency_data["Runner"] == focus]["Winner"].value_counts().head(8)
+
+        rivals_combined = pd.concat([
+            rivals_won.rename("Won Against"),
+            rivals_lost.rename("Lost To"),
+        ], axis=1).fillna(0).astype(int)
+        rivals_combined = rivals_combined[rivals_combined.index != focus]
+        rivals_combined["Total"] = rivals_combined["Won Against"] + rivals_combined["Lost To"]
+        rivals_combined = rivals_combined.sort_values("Total", ascending=False).head(6)
+
+        if not rivals_combined.empty:
+            rows_rival = ""
+            for party, r in rivals_combined.iterrows():
+                rc = party_color(str(party))
+                won_bar = int(r["Won Against"] / (rivals_combined["Won Against"].max() or 1) * 60)
+                lost_bar = int(r["Lost To"] / (rivals_combined["Lost To"].max() or 1) * 60)
+                rows_rival += f"""
+                <tr>
+                    <td>
+                        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;
+                              background:{rc};margin-right:6px;"></span>
+                        <span style="color:#e5e2e1; font-size:12px;">{party}</span>
+                    </td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <div style="width:{won_bar}px; height:4px; background:{p_color}; border-radius:2px;"></div>
+                            <span style="font-family:'JetBrains Mono',monospace; color:{p_color}; font-size:11px;">{r['Won Against']}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <div style="width:{lost_bar}px; height:4px; background:#ff6b6b; border-radius:2px;"></div>
+                            <span style="font-family:'JetBrains Mono',monospace; color:#ff6b6b; font-size:11px;">{r['Lost To']}</span>
+                        </div>
+                    </td>
+                </tr>"""
+            st.markdown(f"""
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Party</th>
+                        <th style="color:{p_color};">Won Against</th>
+                        <th style="color:#ff6b6b;">Lost To</th>
+                    </tr>
+                </thead>
+                <tbody>{rows_rival}</tbody>
+            </table>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="color:#849396; text-align:center; padding:1rem; font-family:JetBrains Mono, monospace; font-size:12px;">No rivalry data</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col4:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Closest Contests — Wins & Near Misses</div>', unsafe_allow_html=True)
+
+        # Tightest wins
+        tight_wins = (
+            constituency_data[constituency_data["Winner"] == focus]
+            .dropna(subset=["Margin"])
+            .sort_values("Margin")
+            .head(5)
+        )
+        # Near misses (where focus party was runner up, lost narrowly)
+        near_miss = (
+            constituency_data[constituency_data["Runner"] == focus]
+            .dropna(subset=["Margin"])
+            .sort_values("Margin")
+            .head(5)
+        )
+
+        rows_tight = ""
+        if not tight_wins.empty:
+            for _, r in tight_wins.iterrows():
+                rc = party_color(r["Runner"])
+                rows_tight += f"""
+                <tr>
+                    <td style="font-size:12px;">{r['Constituency']}</td>
+                    <td style="color:#849396; font-size:11px;">{r['District']}</td>
+                    <td><span style="color:{rc}; font-family:'JetBrains Mono',monospace; font-size:11px;">{r['Runner']}</span></td>
+                    <td style="font-family:'JetBrains Mono',monospace; color:{p_color}; font-size:11px;">✓ {int(r['Margin']):,}</td>
+                </tr>"""
+
+        rows_miss = ""
+        if not near_miss.empty:
+            for _, r in near_miss.iterrows():
+                wc = party_color(r["Winner"])
+                rows_miss += f"""
+                <tr>
+                    <td style="font-size:12px;">{r['Constituency']}</td>
+                    <td style="color:#849396; font-size:11px;">{r['District']}</td>
+                    <td><span style="color:{wc}; font-family:'JetBrains Mono',monospace; font-size:11px;">{r['Winner']}</span></td>
+                    <td style="font-family:'JetBrains Mono',monospace; color:#ff6b6b; font-size:11px;">✗ {int(r['Margin']):,}</td>
+                </tr>"""
+
+        if rows_tight:
+            st.markdown(f'<div style="font-family:JetBrains Mono,monospace; font-size:10px; color:{p_color}; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.4rem;">Narrowest Wins</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <table class="styled-table" style="margin-bottom:1rem;">
+                <thead><tr><th>Constituency</th><th>District</th><th>Runner</th><th>Margin</th></tr></thead>
+                <tbody>{rows_tight}</tbody>
+            </table>""", unsafe_allow_html=True)
+
+        if rows_miss:
+            st.markdown(f'<div style="font-family:JetBrains Mono,monospace; font-size:10px; color:#ff6b6b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.4rem; margin-top:.75rem;">Near Misses</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <table class="styled-table">
+                <thead><tr><th>Constituency</th><th>District</th><th>Winner</th><th>Margin</th></tr></thead>
+                <tbody>{rows_miss}</tbody>
+            </table>""", unsafe_allow_html=True)
+
+        if not rows_tight and not rows_miss:
+            st.markdown('<div style="color:#849396; text-align:center; padding:1rem; font-family:JetBrains Mono, monospace; font-size:12px;">No contest data available</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Row 3: 2021→2026 Comparison + Full constituency list ──────────────────
+    col5, col6 = st.columns([1, 2], gap="medium")
+
+    with col5:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">2021 vs 2026 Performance</div>', unsafe_allow_html=True)
+
+        cmp_df = party_seats[party_seats["Party"] == focus]
+        if not cmp_df.empty:
+            s21 = int(cmp_df["Seats_2021"].values[0])
+            s26 = seats_won
+            fig_cmp = go.Figure()
+            fig_cmp.add_trace(go.Bar(
+                x=["2021", "2026"],
+                y=[s21, s26],
+                marker=dict(
+                    color=["#849396", p_color],
+                    line=dict(color="#131313", width=2),
+                ),
+                text=[str(s21), str(s26)],
+                textposition="outside",
+                textfont=dict(family="JetBrains Mono", size=14, color="#e5e2e1"),
+                width=0.4,
+            ))
+            fig_cmp.update_layout(
+                **PLOTLY_LAYOUT,
+                height=240,
+                showlegend=False,
+                xaxis=dict(showgrid=False, color="#849396"),
+                yaxis=dict(showgrid=True, gridcolor="#2a2a2a", color="#849396"),
+            )
+            st.plotly_chart(fig_cmp, use_container_width=True, config={"displayModeBar": False})
+
+            chg_color = "#00daf3" if seat_change >= 0 else "#ff6b6b"
+            st.markdown(f"""
+            <div style="text-align:center; margin-top:.5rem;">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#849396;">Net seat change</span><br>
+                <span style="font-size:28px; font-weight:700; color:{chg_color}; font-family:'JetBrains Mono',monospace;">
+                    {chg_sign}{seat_change}
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="color:#849396; font-size:12px; font-family:JetBrains Mono, monospace; text-align:center; padding:1rem;">No 2021 data for this party</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col6:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">All {focus} Wins — Constituency List</div>', unsafe_allow_html=True)
+
+        party_wins = constituency_data[constituency_data["Winner"] == focus].sort_values("Margin", ascending=False, na_position="last")
+
+        rows_all = ""
+        for i, (_, r) in enumerate(party_wins.iterrows()):
+            rc = party_color(r["Runner"])
+            margin_str = f"{int(r['Margin']):,}" if pd.notna(r["Margin"]) else "—"
+            rows_all += f"""
+            <tr>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#849396; width:28px;">{i+1}</td>
+                <td style="font-size:12px; font-weight:500;">{r['Constituency']}</td>
+                <td style="color:#849396; font-size:11px;">{r['District']}</td>
+                <td><span style="color:{rc}; font-family:'JetBrains Mono',monospace; font-size:11px;">{r['Runner']}</span></td>
+                <td style="font-family:'JetBrains Mono',monospace; color:#c3f5ff; font-size:11px;">{margin_str}</td>
+            </tr>"""
+
+        if not rows_all:
+            rows_all = f'<tr><td colspan="5" style="text-align:center; color:#849396; padding:1.5rem; font-family:JetBrains Mono, monospace; font-size:12px;">No wins found for {focus}</td></tr>'
+
+        st.markdown(f"""
+        <div style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#3b494c #1b1b1c;">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Constituency</th>
+                    <th>District</th>
+                    <th>Runner-up</th>
+                    <th>Margin</th>
+                </tr>
+            </thead>
+            <tbody>{rows_all}</tbody>
+        </table>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
